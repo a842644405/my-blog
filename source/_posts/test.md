@@ -1,9 +1,7 @@
 ---
-title: test
+title: blog tutorial
 date: 2022-10-16 10:05:32
 tags:
 ---
 
-你好 hexo
-
-测试
+https://blog.cuijiacai.com/blog-building/
