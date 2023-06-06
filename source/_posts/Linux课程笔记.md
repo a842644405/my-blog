@@ -4,6 +4,36 @@ title: Linux
 
 # Linux基础命令
 
+## 快捷键
+
+操作快捷键
+. Ctrl +r:查找历史命令
+. Ctrl + a \ Ctrl + e:移动光标到命令行首\行尾
+
+. Ctrl + w iCtrl+ k:删除光标之前\之后的内容
+
+
+
+VIM文件编辑快捷键
+ZZ:文件保存并退出
+
+
+
+进程操作快捷键
+.Ctrl +c 强制终止程序的执行
+
+.Ctrl+z 挂起一个进程
+.Ctrl+d 终端中输入exit后回车
+
+
+
+top命令中的快捷键
+Shift +p:根据CPU使用率排序
+
+Shift +m:根据内存占用排序
+
+
+
 ctrl + c 强制停止
 
 ctrl + d 退出或登出
