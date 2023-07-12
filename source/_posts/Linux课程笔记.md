@@ -2,28 +2,40 @@
 title: Linux
 ---
 
-# Linux基础命令
+# Linux相关概念
+
+EPEL (**Extra Packages for Enterprise Linux**) is a third-party repository of packages for the Fedora-based and CentOS/RHEL-based Linux distributions. It provides additional software packages that are not included in the default package repositories of these distributions.The EPEL repository includes a wide range of software.
+
+
+
+
+
+# Linux命令
 
 ## 快捷键
 
-操作快捷键
-. Ctrl +r:查找历史命令
-. Ctrl + a \ Ctrl + e:移动光标到命令行首\行尾
+日常操作
+Ctrl +r 查找历史命令
+Ctrl + a \ Ctrl + e:移动光标到命令行首\行尾
 
-. Ctrl + w iCtrl+ k:删除光标之前\之后的内容
-
-
-
-VIM文件编辑快捷键
-ZZ:文件保存并退出
+Ctrl + w \Ctrl + k:删除光标之前\之后的内容
 
 
 
-进程操作快捷键
-.Ctrl +c 强制终止程序的执行
+VIM操作
+ZZ or :wq 文件保存并退出 
 
-.Ctrl+z 挂起一个进程
-.Ctrl+d 终端中输入exit后回车
+/ 查找
+
+
+
+
+
+进程操作
+Ctrl +c 强制终止程序的执行
+
+Ctrl+z 挂起一个进程
+Ctrl+d 终端中输入exit后回车
 
 
 
@@ -59,31 +71,64 @@ ctrl + 键盘右键，向右跳一个单词
 
 ![1684938168463](Linux%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/1684938168463.png)
 
-- `/`，根目录是最顶级的目录了
-- Linux只有一个顶级目录：`/`
-- 路径描述的层次关系同样适用`/`来表示
-- /home/itheima/a.txt，表示根目录下的home文件夹内有itheima文件夹，内有a.txt
+- / 根目录
+- /home/test/a.txt 表示根目录下的home文件夹内有test文件夹内有a.txt
+- 
+
+## 查看命令的帮助 ls --help
+
+`命令 --help`查看命令的帮助手册
+
+
+
+## 查看命令的详细手册 man ls
+
+`man 命令`查看某命令的详细手册
+
+
+
+## info ls
+
+
+
+## 软件安装命令
+
+```sh
+#CentOS系统使用
+yum [install remove search] [-y] 软件名称
+-y 自动确认
+
+#Ubuntu系统使用
+apt [install remove search] [-y] 软件名称
+```
+
+yum 和 apt 均需 root权限
 
 
 
 ## ls命令
 
-ls 列出文件夹信息
+ls list 列出文件夹信息
 
 `ls [-l -h -a] [参数]`
 
-- ls -l  ll 以列表形式查看
-- ll -h 显示kb
-- ll -a，显示隐藏文件(.开头的文件/文件夹)
-- ll -t 时间
-- ll -r 逆序
-- ls -F 分类显示
+```sh
+ls -l  ll 以列表形式查看
+ll -h 显示kb
+ll -a 显示隐藏文件(.开头的文件/文件夹)
+ll -t 时间
+ll -r 逆序
+ls -F 分类显示
+```
 
 
 
-## pwd命令
+## pwd
 
-pwd print work directory
+```sh
+#print work directory
+pwd 
+```
 
 
 
@@ -91,9 +136,11 @@ pwd print work directory
 
 cd change directory
 
-cd ~ 用户目录
+cd  进入当前用户目录
 
 cd ./ 当前 	cd ..上一级
+
+
 
 ## HOME目录
 
@@ -105,21 +152,21 @@ cd ./ 当前 	cd ..上一级
 
 
 
-FinalShell登陆终端后，默认的工作目录就是用户的HOME目录
+通过SSH登陆终端后，默认的工作目录是 用户的HOME目录
 
 
 
 ## 相对路径、绝对路径
 
-- 相对路径，非`/`开头的称之为相对路径
+- 相对路径
 
-  相对路径表示以**当前目录**作为起点，去描述路径，
+  以**当前目录**作为起点，去描述路径
 
-  如`test/a.txt`，表示当前工作目录内的test文件夹内的a.txt文件
+  如 test/a.txt，表示当前工作目录内的test文件夹内的a.txt文件
 
-- 绝对路径，以`/`开头的称之为绝对路径
+- 绝对路径
 
-  绝对路径从`根`开始描述路径
+  从`根`开始描述路径
   
   cd /etc/sysconfig/network-scripts/
 
@@ -127,9 +174,10 @@ FinalShell登陆终端后，默认的工作目录就是用户的HOME目录
 
 ## 特殊路径符
 
-- `.`，当前 ./a.txt 当前文件夹内的`a.txt`文件
-- `..`，上级目录 ../ 表示上级目录   ../../  上级的上级目录
-- `~`，用户的HOME目录 `cd ~`切回用户HOME目录
+- `.`，  当前目录 	./a.txt 当前文件夹内的`a.txt`文件
+- `..`，上级目录      ../../  上级的上级目录
+- `~`，  用户的HOME目录 
+- 
 
 ## mkdir命令
 
@@ -150,15 +198,28 @@ FinalShell登陆终端后，默认的工作目录就是用户的HOME目录
 
 - 参数：被创建的文件路径
 
+```sh
+touch /etc/docker/daemon.json
+vim /etc/docker/daemon.json
+```
+
+编辑新增的内容
+
+{
+  "registry-mirrors": ["https://0s0nyqqk.mirror.aliyuncs.com"]
+}
+
 
 
 ## cat命令
 
 功能：查看文件内容
 
-语法：`cat 参数`
+语法：cat  被查看的文件路径
 
-- 参数：被查看的文件路径
+```sh
+cat /etc/docker/daemon.json
+```
 
 
 
@@ -166,12 +227,11 @@ FinalShell登陆终端后，默认的工作目录就是用户的HOME目录
 
 功能：查看文件，可以支持翻页查看
 
-语法：`more 参数`
+语法：more 被查看的文件路径
 
-- 参数：被查看的文件路径
 - 在查看过程中：
-  - `空格`键翻页
-  - `q`退出查看
+  - **`空格`键翻页**
+  - **`q`退出查看**
 
 
 
@@ -179,17 +239,15 @@ FinalShell登陆终端后，默认的工作目录就是用户的HOME目录
 
 功能：复制文件、文件夹
 
-语法：`cp [-r] 参数1 参数2`
+语法：`cp [-r] source destination`
 
-- 参数1，被复制的
-- 参数2，要复制去的地方
-- 选项：-r，可选，复制文件夹使用
+- 选项：-r 复制文件夹使用
 
 示例：
 
-- cp a.txt b.txt，复制当前目录下a.txt为b.txt
-- cp a.txt test/，复制当前目录a.txt到test文件夹内
-- cp -r test test2，复制文件夹test到当前文件夹内为test2存在
+- cp a.txt b.txt	复制当前目录下的 a.txt为b.txt
+- cp a.txt test/    复制当前目录a.txt到test文件夹内
+- cp -r test test2 复制文件夹test到当前文件夹内为test2内
 
 
 
@@ -197,18 +255,25 @@ FinalShell登陆终端后，默认的工作目录就是用户的HOME目录
 
 功能：移动文件、文件夹
 
-语法：`mv 参数1 参数2`
+语法：`mv source destination`
 
 - 参数1：被移动的
 - 参数2：要移动去的地方，参数2如果不存在，则会进行改名
 
+```sh
+cd /etc/yum.repos.d
+mv CentOS-Base.repo CentOS-Base.repo.bak
+#阿里源文件下载
+wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo 
+```
 
 
-## rm命令
+
+## rm
 
 功能：删除文件、文件夹
 
-语法：`rm [-r -f] 参数...参数`
+语法：`rm [-r -f] 参数 参数`
 
 - 参数：支持多个，每一个表示被删除的，空格进行分隔
 - 选项：-r，删除文件夹使用
@@ -218,19 +283,22 @@ FinalShell登陆终端后，默认的工作目录就是用户的HOME目录
 
 
 
-## which命令
+## which
 
-功能：查看命令的程序本体**文件路径**
+查看命令的程序本体**文件路径**
 
-语法：`which 参数`
+which 命令 
 
-- 参数：被查看的命令 which ls
+```sh
+[root@localhost yum.repos.d]# which cd
+/usr/bin/cd
+```
 
 
 
 ## find
 
-功能：搜索文件
+搜索文件
 
 按文件名搜索
 
@@ -240,16 +308,27 @@ find 起始路径 -name 搜索关键字
 
 ```sh
 find / -name docker
-
 find /usr/local -name  *bin*
 ```
 
+
+
 ## locate
+
+
 
 **CentOS7默认没有安装该命令** 
 
 ```sh
 yum install mlocate -y
+#初次使用必须先创建数据库
+updatedb
+
+locate -ie abc.txt 
+#如果 abc.txt已经删除了，使用-e会检查文件是否真实存在，而不必updatedb；
+#-i，忽略大小写
+#在/etc中查找类似profile的文件
+locate /etc/*profile 
 ```
 
 locate通过数据库（/var/lib/mlocate/mlocate.db文件）来查找文件（当天新增的文件查询不到 使用sudo updatedb 可以立即更新数据库）
@@ -316,9 +395,14 @@ locate通过数据库（/var/lib/mlocate/mlocate.db文件）来查找文件（�
 
 - 参数：被输出的内容
 
-echo haha 	echo $var
+```sh
+echo haha 	
+echo $var
+echo haha > a
+echo haha >> a 
+```
 
-## 反引号
+## 反引号	
 
 功能：被两个反引号包围的内容，会作为命令执行
 
@@ -354,8 +438,8 @@ head -3 docker.log
 
 功能：将符号左边的结果，输出到右边指定的文件中去
 
-- `>`，表示覆盖输出
-- `>>`，表示追加输出
+- `>` 覆盖输出
+- `>>` 追加下一行输出
 
 
 
@@ -375,77 +459,44 @@ head -3 docker.log
 
 
 
-### 查看命令的帮助 ls --help
-
-可以通过：`命令 --help`查看命令的帮助手册
-
-![image-20221027220005610](https://image-set.oss-cn-zhangjiakou.aliyuncs.com/img-out/2022/10/27/20221027220005.png)
-
-### 查看命令的详细手册 man ls
-
-可以通过：`man 命令`查看某命令的详细手册
-
-![image-20221027220009949](https://image-set.oss-cn-zhangjiakou.aliyuncs.com/img-out/2022/10/27/20221027220010.png)
-
-
-
-
-
-# Linux常用操作
-
-## 软件安装
-
-- CentOS系统使用：
-  - yum [install remove search] [-y] 软件名称
-    - install 
-    - remove 
-    - search 
-    - -y，自动确认
-- Ubuntu系统使用
-  - apt [install remove search] [-y] 软件名称
-    - install 
-    - remove 
-    - search 
-    - -y，自动确认
-
-> yum 和 apt 均需要root权限
-
-
-
 ## systemctl
 
-功能：控制 系统服务的 启动关闭等
+功能：控制 系统服务的 启停等
 
 语法：`systemctl start | stop | restart | disable | enable | status 服务名`
 
 - start
 - stop
 - status
-- disable 关闭开机自启
-- enable 开启开机自启
+- disable 取消开机自启
+- enable 开机自启
 - restart
 
 系统内置的服务比较多，比如：
 
-```sh
+```
 NetworkManager 主网络服务
 network 	   副网络服务
 firewalld      防火墙服务
-sshd，ssh服务（FinalShell远程登录Linux使用的就是这个服务）
+sshd		   ssh服务 secure shell
 ```
 
 
 
 ## 软链接 ln -s 
 
-功能：创建文件、文件夹软链接（快捷方式）
+创建文件、文件夹的软链接（快捷方式）
 
-语法：`ln -s 参数1 参数2`
+`ln -s 参数1 参数2`
 
 - 参数1：被链接的
 - 参数2：要链接去的地方（快捷方式的名称和存放位置）
 
+```
 ln -s /etc/yum.conf ~/yum.conf
+```
+
+
 
 ## 日期
 
@@ -494,17 +545,29 @@ ln -s /etc/yum.conf ~/yum.conf
 
 
 
-## ntp
+## 网络时间ntp
 
-功能：同步时间
+Network Time Protocol
 
-安装：`yum install -y ntp`
+```sh
+#查看设置系统时区
+rm -rf /etc/localtime
+ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
-启动管理：`systemctl start | stop | restart | status | disable | enable ntpd`
+#安装ntp并同步时间
+yum install -y ntp
+ntpdate -u ntp.aliyun.com
+
+sudo systemctl enable ntpd
+sudo systemctl start ntpd
+
+#查看系统硬件时间
+hwclock --show
+#从当前系统时间设置硬件时间
+hwclock -w
+```
 
 
-
-手动校准时间：`ntpdate -u ntp.aliyun.com`
 
 
 
@@ -518,7 +581,7 @@ ifconfig
 
 特殊IP：
 
-- 127.0.0.1，表示本机
+- 127.0.0.1 本机
 - 0.0.0.0
   - 可以表示本机
   - 也可以表示任意IP（看使用场景）
@@ -529,45 +592,155 @@ ifconfig
 
 ## 主机名 hostname
 
-功能：Linux系统的名称
+查看当前主机名
 
-查看：`hostname`
+```
+hostname
+```
 
-设置：`hostnamectl set-hostname 主机名`
+
+
+设置主机名
+
+```sh
+hostnamectl set-hostname newHostName
+cat /etc/hosts
+```
 
 
 
 ## 配置VMware固定IP
 
-1. 修改VMware网络，参阅PPT，图太多
+```sh
+vim /etc/sysconfig/network-scripts/ifcfg-ens33
+```
 
-2. 设置Linux内部固定IP
+```shell
+TYPE="Ethernet"
+PROXY_METHOD="none"
+BROWSER_ONLY="no"
+BOOTPROTO="static"			# 改为static，固定IP
+DEFROUTE="yes"
+IPV4_FAILURE_FATAL="no"
+IPV6INIT="yes"
+IPV6_AUTOCONF="yes"
+IPV6_DEFROUTE="yes"
+IPV6_FAILURE_FATAL="no"
+IPV6_ADDR_GEN_MODE="stable-privacy"
+NAME="ens33"
+UUID="1b0011cb-0d2e-4eaa-8a11-af7d50ebc876"
+DEVICE="ens33"
+ONBOOT="yes"
+IPADDR="192.168.101.111"		# IP地址，自己设置，要匹配网络范围
+NETMASK="255.255.255.0"		# 子网掩码，固定写法255.255.255.0
+GATEWAY="192.168.101.2"		# 网关，要和VMware中配置的一致
+DNS1="192.168.101.2"			# DNS1服务器，和网关一致即可
+```
 
-   修改文件：vim /etc/sysconfig/network-scripts/ifcfg-ens33
 
-   示例文件内容：
 
-   ```shell
-   TYPE="Ethernet"
-   PROXY_METHOD="none"
-   BROWSER_ONLY="no"
-   BOOTPROTO="static"			# 改为static，固定IP
-   DEFROUTE="yes"
-   IPV4_FAILURE_FATAL="no"
-   IPV6INIT="yes"
-   IPV6_AUTOCONF="yes"
-   IPV6_DEFROUTE="yes"
-   IPV6_FAILURE_FATAL="no"
-   IPV6_ADDR_GEN_MODE="stable-privacy"
-   NAME="ens33"
-   UUID="1b0011cb-0d2e-4eaa-8a11-af7d50ebc876"
-   DEVICE="ens33"
-   ONBOOT="yes"
-   IPADDR="192.168.101.111"		# IP地址，自己设置，要匹配网络范围
-   NETMASK="255.255.255.0"		# 子网掩码，固定写法255.255.255.0
-   GATEWAY="192.168.101.2"		# 网关，要和VMware中配置的一致
-   DNS1="192.168.101.2"			# DNS1服务器，和网关一致即可
-   ```
+## 网络相关命令
+
+### 网卡配置
+
+```sh
+#网卡命名规则受biosdevname和net.ifnames两个参数影响
+#编辑/etc/default/grub文件，增加 biosdevname=0 net.ifnames=O
+#更新grub
+grub2-mkconfig -o / boot/grub2/grub.cfg
+
+#重启生效
+reboot
+```
+
+<img src="Linux%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/1686106222262.png" alt="1686106222262" style="zoom:80%;" />
+
+```sh
+#查看网卡物理连接情况
+[root@localhost grub2]# mii-tool ens33
+ens33: negotiated 1000baseT-FD flow-control, link ok
+
+#查看网关
+route -n
+```
+
+![image-20230615142135785](Linux%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/image-20230615142135785.png)
+
+参数解析:
+Destination表示网络号
+Gateway 网关地址，网络是通过该IP出口，如果显示0.0.0.0，表示该路由信息，是从本机转发出去的
+
+Genmask 子网掩码地址，IP地址配合子网掩码，才是一个完整的网络信息
+Flags:路由标记，标记当前的网络状态
+U Up运行的状态
+G 表示是一个网关路由器
+
+H 表示这个网关是一个主机
+！表示当前这个路由已禁止
+
+```
+ip addr ls
+ifconfig
+ip addr add 10.0.0.1/24 dev eth1
+ifconfig eth1 10.0.0.1 netmask 255.255.255.0. ip route add 10.0.0/24 via 192.168.0.1
+route add -net 10.0.0.0 netmask 255.255.255.0 gw 192.168.0.1
+```
+
+
+
+#### 端口
+
+1. 端口
+   计算机和外部交互的出入口，可以分为 物理端口 和 虚拟端口
+   物理端口：USB、HDMI、DP、VGA、RJ45等
+   虚拟端口：操作系统 和 外部 交互的出入口
+   IP+port 锁定 要交互的程序
+2. 端口的划分
+   公认端口：1~1023，用于系统内置或常用知名软件绑定使用
+   注册端口：1024~49151，用于松散绑定使用（用户自定义）
+   动态端口：49152~65535，用于临时使用（多用于出口）
+3. 查看端口占用
+
+```sh
+#查看指定IP的对外暴露端口
+nmap IP地址
+
+
+netstat -anp | grep 3306
+#端口号，查看本机指定端口号的占用情况
+```
+
+### 网络故障排除
+
+#### ping
+
+测试网络是否联通
+
+语法：`ping [-c num] url`
+
+ ping -c 3 www.baidu.com   ping3次
+
+
+
+#### netstat
+
+查看**网络状态和统计信息** ，显示当前TCP/IP连接、路由表、网络接口信息等。常用于故障排除，诊断网络问题以及监视网络活动。
+
+常见的netstat选项：
+
+- -a：显示所有的网络连接（包括监听和非监听状态）。
+- -t：只显示TCP协议的连接。
+- -u：只显示UDP协议的连接。
+- -n：使用数字形式显示网络地址和端口号，不要解析成名称。
+- -p：显示与连接相关的程序名和进程ID。
+- -r：显示路由表信息。
+- -i：显示网络接口状态。
+
+例如，使用netstat -tunap命令可列出所有正在进行的TCP和UDP连接。该命令列出每个连接的本地和远程IP地址、端口号、协议和当前状态，以及与每个连接相关联的程序名称和进程ID。
+
+netstat是一个强大的网络工具，能够提供有关网络连接和流量的详细信息，使管理员和用户能够定位和解决各种网络问题。
+
+
 
 
 
@@ -594,35 +767,7 @@ CMD：进程对应的名称或启动路径或启动命令
 
 
 
-## 端口
 
-1. 什么是端口？
-    计算机和外部交互的出入口，可以分为物理端口和虚拟端口
-    物理端口：USB、HDMI、DP、VGA、RJ45等
-    虚拟端口：操作系统和外部交互的出入口
-    IP确定计算机，端口锁定要交互的程序
-
-2. 端口的划分
-    公认端口：1~1023，用于系统内置或常用知名软件绑定使用
-    注册端口：1024~49151，用于松散绑定使用（用户自定义）
-    动态端口：49152~65535，用于临时使用（多用于出口）
-
-3. 查看端口占用
-
-  ```sh
-  nmap IP地址
-  查看指定IP的对外暴露端口
-  netstat -anp | grep 3306
-  端口号，查看本机指定端口号的占用情况
-  ```
-
-## ping命令
-
-测试网络是否联通
-
-语法：`ping [-c num] 参数`
-
- ping -c 3 www.baidu.com   ping3次
 
 
 
@@ -638,11 +783,24 @@ url 下载链接
 在后台下载：wget -b http://archive.apache.org/dist/hadoop/common/hadoop-3.3.0/hadoop-3.3.0.tar.gz
 通过tail命令可以监控后台下载进度：tail -f wget-log
 
-## curl命令
+## curl
+
+发送http网络请求,可用于下载文件、获取信息等
+
+curl [-o] url 
+-O 用于下载文件，当url是下载链接时，可以使用此选项保存文件
 
 ![image-20221027221201079](https://image-set.oss-cn-zhangjiakou.aliyuncs.com/img-out/2022/10/27/20221027221201.png)
 
-![image-20221027221210518](https://image-set.oss-cn-zhangjiakou.aliyuncs.com/img-out/2022/10/27/20221027221210.png)
+![image-20230615165149036](Linux%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/image-20230615165149036.png)
+
+```sh
+#获取主机的公网ip
+curl cip.cc
+ 
+#先切换到对应的目录再下载文件
+curl -O https://mirrors.tuna.tsinghua.edu.cn/virtualbox/LATEST.TXT
+```
 
 
 
@@ -695,8 +853,8 @@ url 下载链接
 - 临时设置：export 变量名=变量值
 - 永久设置：
   - 针对用户，设置用户HOME目录内：`.bashrc`文件
-  - 针对全局，设置`/etc/profile`
-  - 配置完成后，用source命令立刻生效
+  - 针对全局配置，vim /etc/profile
+  - 配置完成后，source /etc/profile 立刻生效
 
 
 
@@ -795,46 +953,45 @@ visudo命令
 
 
 
-## chmod命令
+## genent命令
 
-修改文件、文件夹权限
+`getent` 的全称是 "get entries from administrative database"，从系统的各种数据库（如 passwd、group 和 hosts）中获取条目的命令。使用 `getent` 命令可以在 Linux 系统上检索与用户、组和网络信息相关的条目。
 
-chmod 777 filename
-
-chmod -R 777 文件夹及内部所有
-
-语法：`chmod [-R] 权限 参数`
-
-- 权限，要设置的权限，比如755，表示：`rwx r-x r-x`
-
-  ![1684938749252](Linux%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/1684938749252.png)
-
-- 参数，被修改的文件、文件夹
-
-- -R，设置文件夹和其内部全部内容一样生效
-
-
-
-## chown命令 
-
+```sh
+#查看系统全部的用户组
+getent group
 ```
-修改文件、文件夹所属用户、组
 
-此命令只适用于root用户执行
+![image-20221027222446514](https://image-set.oss-cn-zhangjiakou.aliyuncs.com/img-out/2022/10/27/20221027222446.png)
 
-语法：`chown [-R] [用户][:][用户组] 文件或文件夹`
+组名称:组认证(显示为x):组ID
 
-- chown root hello.txt，将hello.txt所属用户修改为root
-- chown :root hello.txt，将hello.txt所属用户组修改为root
-- chown root:itheima hello.txt，将hello.txt所属用户修改为root，用户组修改为itheima
-- chown -R root test，将文件夹test的所属用户修改为root并对文件夹内全部内容应用同样规则
+```sh
+#查看系统全部的用户
+getent passwd
 ```
+
+<img src="Linux%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/1684938626013.png" alt="1684938626013" style="zoom:50%;" />
+
+用户名:密码(x):用户ID:组ID:描述信息(无用):HOME目录:执行终端(默认bash)
+
+
+
+![image-20230521204016977](Linux课程笔记/image-20230521204016977.png)
+
+文件、文件夹的
+
+权限控制信息
+所属用户
+所属用户组
+
+![image-20230615113352091](Linux%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/image-20230615113352091.png)
+
+
 
 
 
 ## 用户组管理
-
-
 
 ```sh
 groupadd 用户组名
@@ -853,9 +1010,11 @@ useradd [-g -d] 用户名
 -g指定 用户的组，不指定-g，会创建同名组并自动加入，指定-g需要组已经存在，如已存在同名组，必须使用-g
 -d指定 用户HOME路径，不指定，HOME目录默认在：/home/用户名
 
+useradd -g root vijay
+
 删除用户
 userdel [-r] 用户名
--r，删除用户的HOME目录，
+-r 删除用户的HOME目录，
 不使用-r，删除用户时，HOME目录保留
 
 查看用户所属组
@@ -864,35 +1023,58 @@ id [用户名]
 
 修改用户所属组
 usermod -aG 用户组 用户名，将指定用户加入指定用户组
- modify
+modify
 
 ```
 
+## chmod
+
+change mode 
+
+用于修改文件、文件夹的访问权限
+
+```
+chmod 777 filename
+chmod -R 777 文件夹及内部所有
+```
+
+`chmod [-R] 权限 参数`
+
+权限，要设置的权限，比如755，表示：`rwx r-x r-x`
+
+参数，被修改的文件、文件夹
+
+-R 设置文件夹和其内部全部内容一样生效
+
+x 1
+
+w 2
+
+r 4
+
+![1684938749252](Linux%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/1684938749252.png)
 
 
-## genent命令
-
-- getent group 查看系统全部的用户组
-
-  ![image-20221027222446514](https://image-set.oss-cn-zhangjiakou.aliyuncs.com/img-out/2022/10/27/20221027222446.png)
-
-  组名称:组认证(显示为x):组ID
-
-- `getent passwd`，查看系统全部的用户
-
-  ![1684938626013](Linux%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/1684938626013.png)
-
-用户名:密码(x):用户ID:组ID:描述信息(无用):HOME目录:执行终端(默认bash)
 
 
 
-![image-20230521204016977](Linux课程笔记/image-20230521204016977.png)
+## chown
 
-文件、文件夹的
+change owner
 
-权限控制信息
-所属用户
-所属用户组
+修改文件、文件夹**所属用户、组**
+
+语法：`chown [-R] [用户][:][用户组] 文件或文件夹`
+
+```sh
+#此命令只适用于root用户执行
+chown root hello.txt，将hello.txt所属用户修改为root
+chown :root hello.txt，将hello.txt所属用户组修改为root
+chown root:itheima hello.txt，将hello.txt所属用户修改为root，用户组修改为itheima
+chown -R root test，将文件夹test的 所属用户 修改为 root并对文件夹内全部内容应用同样规则
+```
+
+
 
 
 
@@ -902,5 +1084,25 @@ usermod -aG 用户组 用户名，将指定用户加入指定用户组
 
 env
 
+```
+查看环境变量：
+echo $VARIABLE_NAME：显示指定环境变量的值。
+例如，echo $PATH 显示 PATH 环境变量的值。
 
+printenv：列出所有环境变量及其值。
+
+设置临时环境变量：
+VARIABLE_NAME=value：设置临时环境变量的值。例如，LANG=en_US.UTF-8 设置 LANG 环境变量为 en_US.UTF-8。
+
+设置永久环境变量（对当前用户）：
+编辑 ~/.bashrc 或 ~/.bash_profile 文件，在文件末尾添加 export VARIABLE_NAME=value，然后保存并退出。例如，export JAVA_HOME=/usr/lib/jvm/java-11 设置 JAVA_HOME 环境变量为 /usr/lib/jvm/java-11。
+运行 source ~/.bashrc 或 source ~/.bash_profile 使修改生效。
+
+设置永久环境变量（对所有用户）：
+编辑 /etc/environment 文件，在文件中添加 VARIABLE_NAME=value 行。例如，JAVA_HOME="/usr/lib/jvm/java-11" 设置 JAVA_HOME 环境变量为 /usr/lib/jvm/java-11。
+删除环境变量：
+
+unset VARIABLE_NAME：删除临时环境变量或当前用户的永久环境变量。
+编辑相应的配置文件，将环境变量的定义删除。
+```
 

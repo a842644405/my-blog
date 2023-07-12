@@ -1,8 +1,6 @@
 ---
-
 title: ansible
 date: 2023-06-01 15:50:36
-tags:
 ---
 
 ### ansible install
@@ -24,8 +22,10 @@ tags:
 ```sh
 #修改主配置文件
 vim /etc/ansible/ansible.cfg
+
 #禁用每次执行ansbile命令检查ssh key host 
 host_key_checking = False
+
 #记录日志
 log_path = /var/log/ansible.log
 
@@ -75,22 +75,30 @@ ansible_ssh_port=var
 
 ### ad-hoc模式（命令行模式）
 
-command/shell module
+**command/shell** module
 
 ```sh
 ansible test -m command -a 'free -mh'
+ansible test -m command -a 'ntpdate -u ntp.aliyun.com'
+ansible test -m command -a 'date'
 ansible test -m shell   -a 'df -h'
 #执行远程主机的sh
 ansible test -m shell -a 'sh /root/a.sh'
 ```
 
-copy module 批量发送文件
+**copy** module 批量发送文件
 
 ```sh
 #使用copy module 远程主机需依赖libselinux-python
 ansible test -m shell   -a 'yum install libselinux-python -y'
 ansible test -m copy    -a 'source  des'
 ```
+
+shell yum 
+
+
+
+
 
 
 

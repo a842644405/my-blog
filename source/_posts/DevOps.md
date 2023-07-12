@@ -6,42 +6,30 @@ title: DevOps
 
 ### 一、DevOps介绍
 
-|                          [DevOps]()                          |
-| :----------------------------------------------------------: |
-| ![image-20211124130409521](DevOps/image-20211124130409521.png) |
+整体软件开发流程：
 
-[DevOps]()是一个不断提高效率并且持续不断工作的过程
-
-[DevOps]()开发可以快速交付，部署也更加稳定。
-
-核心就在于[简化Dev和Ops团队之间的流程，使整体软件开发过程更快速。]()
-
-
-
-整体的软件开发流程包括：
-
-- PLAN：开发团队根据客户的目标制定开发计划
+- PLAN：开发团队 根据客户的目标 制定开发计划
 - CODE：根据PLAN开始编码过程，需要将不同版本的代码存储在一个库中。
 - BUILD：编码完成后，需要将代码构建并且运行。
 - TEST：成功构建项目后，需要测试代码是否存在BUG或错误。
 - DEPLOY：代码经过手动测试和自动化测试后，认定代码已经准备好部署 并且交给运维团队。
 - OPERATE：运维团队将代码 部署到 生产环境中。
 - MONITOR：项目部署上线后，需要持续的监控产品。
-- INTEGRATE：然后将监控阶段收到的反馈发送回PLAN阶段，整体反复的流程就是[DevOps]()的核心，即持续集成、持续部署。
+- INTEGRATE：然后将监控阶段收到的反馈发送回PLAN阶段，**整体反复的流程就是DevOps核心，即持续集成、持续部署**。
 
-为了保证整体流程可以高效的完成，各个阶段都有比较常见的工具，如下图：
+各个阶段都有比较常见的工具：
 
 |               软件开发过程&涉及工具                |
 | :------------------------------------------------: |
 | ![2021-11-23_175935](DevOps/2021-11-23_175935.png) |
 
-最终可以给[DevOps]()下一个定义：[DevOps 强调的是高效组织团队之间如何通过自动化的工具协作和沟通来完成软件的生命周期管理，从而更快、更频繁地交付更稳定的软件。]()
+DevOps 通过自动化的工具协作和沟通来完成软件的生命周期管理，从而更快、更频繁地交付更稳定的软件。
 
-自动化的工具协作和沟通来完成软件的生命周期管理
+
 
 ### 二、Code阶段工具
 
-在code阶段，将不同版本的代码 存储到一个仓库中，常见的版本控制工具就是SVN或者Git，这里我们采用Git作为版本控制工具，GitLab作为远程仓库。
+在code阶段，将不同版本的代码 存储到一个仓库中，常见的**版本控制工具**就是SVN或者**Git**，这里我们采用Git作为版本控制工具，GitLab作为远程仓库。
 
 #### 2.1 Git安装
 
@@ -73,6 +61,7 @@ git remote set-url origin https://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@githu
   mkdir /usr/local/docker   
   mkdir /usr/local/docker/gitlab_docker
   cd /usr/local/docker/gitlab_docker
+  
   vim docker-compose.yml 
   ```
 
@@ -130,11 +119,15 @@ git remote set-url origin https://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@githu
 
 - 第一次登录后需要修改密码
 
+- u root
+
+- p 159357qQ!
+
   |                           修改密码                           |
   | :----------------------------------------------------------: |
   | ![image-20211124193444561](DevOps/image-20211124193444561.png) |
 
-搞定后，即可像Gitee、GitHub一样使用。
+修改后，即可像Gitee、GitHub一样使用。
 
 
 
@@ -156,7 +149,8 @@ vim /usr/local/apache-maven-3.5.4/conf/setting.xml
 <mirror>
   <id>aliyunmaven</id>
   <mirrorOf>*</mirrorOf>
-  <name>阿里云公共仓库</name>  <url>https://maven.aliyun.com/repository/public</url>
+  <name>阿里云公共仓库</name>
+  <url>https://maven.aliyun.com/repository/public</url>
 </mirror>
 
 <profile>    
@@ -181,7 +175,7 @@ vim /usr/local/apache-maven-3.5.4/conf/setting.xml
 
 #### 4.1 Docker安装
 
-- 准备测试环境&生产环境
+详见官网
 
 - 下载Docker依赖组件
 
@@ -199,26 +193,18 @@ vim /usr/local/apache-maven-3.5.4/conf/setting.xml
 
   ```sh
   yum -y install docker-ce
-  ```
-
-- 安装成功后，启动Docker并设置开机自启
-
-  ```sh
+  #安装成功后，启动Docker并设置开机自启
   # 启动Docker服务
   systemctl start docker
   # 设置开机自动启动
   systemctl enable docker
-  ```
-
-- 测试安装成功
-
-  ```sh
+  
+  #测试安装是否成功
   docker version
   ```
+
   
-  |                             效果                             |
-  | :----------------------------------------------------------: |
-  | ![image-20211124200317795](DevOps/image-20211124200317795.png) |
+
 
 #### 4.2 Docker-Compose安装
 
@@ -226,17 +212,19 @@ vim /usr/local/apache-maven-3.5.4/conf/setting.xml
 
   ```shell
   curl -SL https://github.com/docker/compose/releases/download/v2.17.2/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+  
+  -S 显示curl执行期间出现的错误信息。如果发生错误，curl会将错误消息输出到标准错误流（stderr）
+  -L 确保可以访问重定向后的目标资源
+  -o 输出到指定path
   ```
 
   
 
-- 将下载好的[docker-compose-Linux-x86_64]()文件移动到Linux操作系统：……
-
 - 设置[docker-compose-Linux-x86_64]()文件权限，并移动到$PATH目录中
 
   ```sh
-  # 设置文件权限
-  chmod a+x docker-compose-Linux-x86_64
+  # 所有用户 添加 x权限
+  chmod a+x docker-compose-Linux-x86_64 
   # 移动到/usr/bin目录下，并重命名为docker-compose
   mv docker-compose-Linux-x86_64 /usr/bin/docker-compose
   ```
@@ -247,31 +235,30 @@ vim /usr/local/apache-maven-3.5.4/conf/setting.xml
   docker-compose version
   ```
 
-  |                             效果                             |
-  | :----------------------------------------------------------: |
-  | ![image-20211124200658107](DevOps/image-20211124200658107.png) |
+
+
 
 ### 五、Integrate工具
 
-持续集成、持续部署的工具很多，其中Jenkins是一个开源的持续集成平台。
+Jenkins是一个开源的持续集成平台。
 
-Jenkins涉及到将编写完毕的代码发布到测试环境和生产环境的任务，并且还涉及到了构建项目等任务。
+Jenkins涉及到将开发环境编写完毕的代码发布到测试环境和生产环境的任务，并且还涉及到了构建项目等任务。
 
 Jenkins需要大量的插件保证工作，安装成本较高，下面会基于Docker搭建Jenkins。
 
 #### 5.1 Jenkins介绍
 
-Jenkins是一个开源软件项目，是基于Java开发的一种持续集成工具
+Jenkins是基于Java开发的持续集成工具
 
-Jenkins应用广泛，大多数互联网公司都采用Jenkins配合GitLab、Docker、K8s作为实现[DevOps]()的核心工具。
+大多数互联网公司都采用Jenkins配合GitLab、Docker、K8s作为实现DevOps的核心工具。
 
-Jenkins最强大的就在于插件，Jenkins官方提供了大量的插件库，来自动化CI/CD过程中的各种琐碎功能。
+Jenkins最强大的就在于**插件**，Jenkins官方提供了大量的插件库，来自动化CI/CD过程中的各种琐碎功能。
 
 |                                                              |                                                              |
 | :----------------------------------------------------------: | :----------------------------------------------------------: |
 | ![image-20211125141950900](DevOps/image-20211125141950900.png) | ![image-20211124200317795](DevOps/image-20211125141701495.png) |
 
-Jenkins最主要的工作就是将GitLab上可以构建的工程代码拉取并且进行构建，再根据流程可以选择发布到测试环境或是生产环境。
+**Jenkins最主要的工作就是将GitLab上可以构建的工程代码拉取并且进行构建，再根据流程可以选择发布到测试环境或是生产环境。**
 
 一般是GitLab上的代码经过大量的测试后，确定发行版本，再发布到生产环境。
 
@@ -293,13 +280,26 @@ CI/CD可以理解为：
 
 - 拉取Jenkins镜像
 
-  ```
+  ```sh
+  docker search jenkins
   docker pull jenkins/jenkins:2.346.3-lts-jdk8
   
-  mkdir /usr/local/docker/jenkins18080
+  
+  
+  docker run -d \
+    -v /usr/local/docker/jenkins18080:/var/jenkins_home \
+    -v /usr/bin/docker:/usr/bin/docker \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /etc/docker/daemon.json:/etc/docker/daemon.json \
+    --name jenkins18080 \
+    -p 18080:8080 \
+    -p 50000:50000 \
+    jenkins/jenkins:2.346.3-lts-jdk8
   ```
   
 - ```sh
+  mkdir /usr/local/docker/jenkins18080
+  
   docker run -d \
   -p 18080:8080 \
   -p 50000:50000 \
@@ -311,17 +311,19 @@ CI/CD可以理解为：
   
   cd usr/local/docker/jenkins18080
   
+  #修改default.json
+  #在这两个命令中，-i 选项表示直接修改源文件。's#pattern#replacement#g' 是替换操作的语法格式，其中s是substitute, pattern 表示待替换的模式，replacement 表示替换后的内容，最后的 g 表示全局替换
   sed -i 's#https://updates.jenkins.io/download#https://mirrors.tuna.tsinghua.edu.cn/jenkins#g' default.json
   sed -i 's#http://www.google.com#https://www.baidu.com#g' default.json
   
   #
-  cp -r /usr/local/docker/jenkins_docker/data/jdk /usr/local/docker/jenkins18080
-  cp -r /usr/local/docker/jenkins_docker/data/maven /usr/local/docker/jenkins18080
-  
+cp -r /usr/local/jdk /usr/local/docker/jenkins18080
+  cp -r /usr/local/maven /usr/local/docker/jenkins18080
+
   ```
-
   
-
+  
+  
 - 编写docker-compose.yml（本次未使用docke compose启动容器）
 
 - cd /usr/local/docker
@@ -332,14 +334,17 @@ mkdir /usr/local/docker/jenkins_docker
 version: "3.1"
   services:
     jenkins:
-      image: jenkins/jenkins:2.319.1-lts
-      container_name: jenkins
+      image: jenkins/jenkins:2.346.3-lts-jdk8
+      container_name: jenkins18080
+      restart: always
       ports:
-        - 8000:8080
+        - 18080:8080
         - 50000:50000
       volumes:
-        - /usr/local/docker/jenkins_docker/data/:/var/jenkins_home/
-        
+        - /usr/local/docker/jenkins18080:/var/jenkins_home
+        - /usr/bin/docker:/usr/bin/docker
+        - /var/run/docker.sock:/var/run/docker.sock
+        - /etc/docker/daemon.json:/etc/docker/daemon.json
         #/var/jenkins_home/ 插件 项目在这
   ```
   
@@ -350,7 +355,8 @@ version: "3.1"
   | ![image-20211124202610243](DevOps/image-20211124202610243.png) |
 
   ```sh
-  chmod -R a+w data/
+  chmod -R a+w data/ 
+  or
   chmod -R 777 data/
   ```
 
@@ -366,6 +372,7 @@ version: "3.1"
       <url>https://updates.jenkins.io/update-center.json</url>
     </site>
   </sites>
+  
   # 将下载地址替换为http://mirror.esuni.jp/jenkins/updates/update-center.json
   <?xml version='1.1' encoding='UTF-8'?>
   <sites>
@@ -374,6 +381,7 @@ version: "3.1"
       <url>http://mirror.esuni.jp/jenkins/updates/update-center.json</url>
     </site>
   </sites>
+  
   # 清华大学的插件源也可以https://mirrors.tuna.tsinghua.edu.cn/jenkins/updates/update-center.json
   sed 's/被替换/替换/g'
   
@@ -397,7 +405,7 @@ version: "3.1"
   | ![image-20211124205050484](DevOps/image-20211124205050484.png) |
   | ![image-20211124205513465](DevOps/image-20211124205513465.png) |
 
-- 选择需要安装的插件
+  - 选择需要安装的插件 Publish Over SSH	Git Parameters
 
   |                      选择需要安装的插件                      |
   | :----------------------------------------------------------: |
@@ -416,11 +424,11 @@ version: "3.1"
 
 #### 5.3 Jenkins入门配置
 
-由于Jenkins需要从Git拉取代码、需要本地构建、甚至需要直接发布自定义镜像到Docker仓库，所以Jenkins需要配置大量内容。
+由于Jenkins需要从Gitlab拉取代码、需要本地构建、甚至需要直接发布自定义镜像到Docker仓库，所以Jenkins需要配置大量内容。
 
 ##### 5.3.1 构建任务
 
-准备好GitLab仓库中的项目，并且通过Jenkins配置项目的实现当前项目的[DevOps]()基本流程。
+**准备好GitLab仓库中的项目**，并且通过Jenkins配置项目的实现当前项目的DevOps基本流程。
 
 - 构建Maven工程发布到GitLab（Gitee、Github均可）
 
@@ -442,7 +450,7 @@ version: "3.1"
 
 ##### 5.3.1 配置源码拉取地址
 
-Jenkins需要将Git上存放的源码存储到Jenkins服务所在磁盘的本地
+Jenkins需要将Gitlab上存放的源码 存储到Jenkins服务所在磁盘的本地
 
 - 配置任务源码拉取的地址
 
@@ -472,39 +480,12 @@ Jenkins需要将Git上存放的源码存储到Jenkins服务所在磁盘的本地
 
 ##### 5.3.2 配置Maven构建代码
 
-代码拉取到Jenkins本地后，需要在Jenkins中对代码进行构建，这里需要Maven的环境，而Maven需要Java的环境，接下来需要在Jenkins中安装JDK和Maven，并且配置到 Jenkins服务。
+**拉代码**到Jenkins本地后，对代码进行**构建**，需要Maven的环境，Maven需要Java的环境，需在Jenkins中安装JDK和Maven，并且配置到 Jenkins服务。
 
-- 准备JDK、Maven压缩包通过数据卷映射到Jenkins容器内部
+- 准备JDK、Maven压缩包 通过 数据卷映射到Jenkins容器内部（之前已做过）
 
-  |                        数据卷存放位置                        |
-  | :----------------------------------------------------------: |
-  | ![image-20211125203757232](DevOps/image-20211125203757232.png) |
-
-- 解压压缩包，并配置Maven的settings.xml
-
-  ```xml
-  <!-- 阿里云镜像地址 -->
-  <mirror>  
-      <id>alimaven</id>  
-      <name>aliyun maven</name>  
-      <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
-      <mirrorOf>central</mirrorOf>          
-  </mirror>
-  <!-- JDK1.8编译插件 -->
-  <profile>
-      <id>jdk-1.8</id>
-      <activation>
-          <activeByDefault>true</activeByDefault>
-          <jdk>1.8</jdk>
-      </activation>
-      <properties>
-          <maven.compiler.source>1.8</maven.compiler.source>
-          <maven.compiler.target>1.8</maven.compiler.target>
-          <maven.compiler.compilerVersion>1.8</maven.compiler.compilerVersion>
-      </properties>        
-  </profile>
-  ```
-
+  ![image-20230630145124371](DevOps/image-20230630145124371.png)
+  
 - Jenkins配置JDK&Maven并保存
 
   |                                                              |
@@ -688,9 +669,9 @@ Sonar Qube在7.9版本中已经放弃了对MySQL的支持，并且建议在商�
       networks:
         - sonarnet
       environment:
-        SONAR_JDBC_URL: jdbc:postgresql://db:5432/sonar
-        SONAR_JDBC_USERNAME: sonar
-        SONAR_JDBC_PASSWORD: sonar
+        SONARQUBE_JDBC_URL: jdbc:postgresql://db:5432/sonar
+        SONARQUBE_JDBC_USERNAME: sonar
+        SONARQUBE_JDBC_PASSWORD: sonar
   networks:
     sonarnet:
       driver: bridge
@@ -728,6 +709,8 @@ Sonar Qube在7.9版本中已经放弃了对MySQL的支持，并且建议在商�
   | ![image-20211129191537050](DevOps/image-20211129191537050.png) |
 
 - 还需要重新设置一次密码
+
+- admin root
 
   |                         重新设置密码                         |
   | :----------------------------------------------------------: |
@@ -776,9 +759,9 @@ Sonar Qube的使用方式很多，Maven可以整合，也可以采用sonar-scann
           <activeByDefault>true</activeByDefault>
       </activation>
       <properties>
-          <sonar.login>admin</sonar.login>
-          <sonar.password>123456789</sonar.password>
-          <sonar.host.url>http://192.168.11.11:9000</sonar.host.url>
+          <sonar.login>root</sonar.login>
+          <sonar.password>root</sonar.password>
+          <sonar.host.url>http://192.168.101.103:9000</sonar.host.url>
       </properties>
   </profile>
   ```
@@ -887,7 +870,7 @@ Jenkins继承Sonar Qube实现代码扫描需要先下载整合插件
 
   |                   配置任务的Sonar-scanner                    |
   | :----------------------------------------------------------: |
-  | ![image-20211130155849143](DevOps/image-20211130155849143.png) |
+  | <img src="DevOps/image-20211130155849143.png" alt="image-20211130155849143" style="zoom:200%;" /> |
 
 ##### 7.4.4 构建任务
 
@@ -1000,6 +983,17 @@ Harbor作为镜像仓库，主要的交互方式就是将镜像上传到Harbor�
 
 - 修改daemon.json，支持Docker仓库，并重启Docker
 
+  ```
+  vim /etc/docker/daemon.json
+  ```
+
+  ```
+  
+  
+  ```
+
+  
+
   |               修改daemon.json，支持Docker仓库                |
   | :----------------------------------------------------------: |
   | ![image-20211201215931237](DevOps/image-20211201215931237.png) |
@@ -1008,6 +1002,10 @@ Harbor作为镜像仓库，主要的交互方式就是将镜像上传到Harbor�
 
   ```sh
   docker login -u 用户名 -p 密码 Harbor地址
+  
+  docker login -u admin -p Harbor12345 192.168.101.253:80
+  docker tag  e6c6867d5a27 192.168.101.253:80/repo/test:v1.0.0
+  docker push 192.168.101.253:80/repo/test:v1.0.0
   ```
 
 - 推送镜像到Harbor
@@ -1017,24 +1015,30 @@ Harbor作为镜像仓库，主要的交互方式就是将镜像上传到Harbor�
   | ![image-20211201221225196](DevOps/image-20211201221225196.png) |
   | ![image-20211201221300055](DevOps/image-20211201221300055.png) |
 
-##### 8.3.3 从Harbor拉取镜像ls
+##### 8.3.3 最终目标服务器test-111从vj-253-Harbor拉取镜像
 
-跟传统方式一样，不过需要先配置[/etc/docker/daemon.json]()文件
+需要先配置[/etc/docker/daemon.json]()文件 配置harbor源
 
-```json
+```sh
 {
         "registry-mirrors": ["https://pee6w651.mirror.aliyuncs.com"],
-        "insecure-registries": ["192.168.11.11:80"]
+        "insecure-registries": ["192.168.101.253:80"]
 }
 ```
 
-|                           拉取镜像                           |
-| :----------------------------------------------------------: |
-| ![image-20211201222450091](DevOps/image-20211201222450091.png) |
+
+
+```sh
+docker pull 192.168.101.253:80/repo/test:v1.0.0
+```
+
+<img src="DevOps/image-20230705162011395.png" alt="image-20230705162011395" style="zoom:80%;" />
+
+
 
 ##### 8.3.4 Jenkins容器使用宿主机Docker
 
-构建镜像和发布镜像到harbor都需要使用到docker命令。而在Jenkins容器内部安装Docker官方推荐直接采用宿主机带的Docker即可。
+构建 和 发布 镜像到harbor 都需用到 docker命令。而在Jenkins容器内部安装Docker官方推荐直接采用宿主机带的Docker即可。
 
 设置Jenkins容器使用宿主机Docker
 
@@ -1051,13 +1055,14 @@ Harbor作为镜像仓库，主要的交互方式就是将镜像上传到Harbor�
   version: "3.1"
   services:
     jenkins:
-      image: jenkins/jenkins
-      container_name: jenkins
+      image: jenkins/jenkins:2.346.3-lts-jdk8
+      container_name: jenkins18080
+      restart: always
       ports:
-        - 8080:8080
+        - 18080:8080
         - 50000:50000
       volumes:
-        - ./data/:/var/jenkins_home/
+        - /usr/local/docker/jenkins18080:/var/jenkins_home
         - /usr/bin/docker:/usr/bin/docker
         - /var/run/docker.sock:/var/run/docker.sock
         - /etc/docker/daemon.json:/etc/docker/daemon.json
@@ -1067,9 +1072,22 @@ Harbor作为镜像仓库，主要的交互方式就是将镜像上传到Harbor�
 
 ##### 8.3.5 添加构建操作
 
-|                        制作自定义镜像                        |
-| :----------------------------------------------------------: |
-| ![image-20211229155834500](DevOps/image-20211229155834500.png) |
+删除之前的构建后操作
+
+![image-20230706092229442](DevOps/image-20230706092229442.png)
+
+
+
+添加shell
+
+```sh
+#当前目录默认为工程目录workspace/test
+mv target/*.jar docker/
+docker build -t test:$tag docker/
+docker tag test:$tag 192.168.101.253:80/repo/test:$tag
+docker login 192.168.101.253:80/repo/test:$tag -u admin -p Harbor12345
+docker push 192.168.101.253:80/repo/test:$tag
+```
 
 
 
@@ -1596,6 +1614,15 @@ pipeline {
   |                         钉钉通知效果                         |
   | :----------------------------------------------------------: |
   | ![image-20211209163021396](DevOps/image-20211209163021396.png) |
+
+```
+
+ 
+ 
+ 
+ 
+ 
+```
 
 
 

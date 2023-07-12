@@ -69,3 +69,11 @@ while X,Y
 
 
 **For example**, if you say that you want to open the window,people will try to stop you, but if you try to destroy the roof,they will compromise and agree to open the window.
+
+
+
+
+
+2.打破标准-平行结构
+平行结构连接词:
+or, but, rather than, not only … but also,more than, better than, as…as
