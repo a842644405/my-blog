@@ -29,8 +29,6 @@ ZZ or :wq 文件保存并退出
 
 
 
-
-
 进程操作
 Ctrl +c 强制终止程序的执行
 
@@ -73,7 +71,8 @@ ctrl + 键盘右键，向右跳一个单词
 
 - / 根目录
 - /home/test/a.txt 表示根目录下的home文件夹内有test文件夹内有a.txt
-- 
+
+  
 
 ## 查看命令的帮助 ls --help
 
@@ -91,12 +90,24 @@ ctrl + 键盘右键，向右跳一个单词
 
 
 
+## ssh免密登录
+
+```sh
+#本机生成公钥私钥 在/root/.ssh下
+ssh-keygen -t rsa
+#copy id_ras.pub to 192.168.101.253./root/.ssh/authorized_keys
+ssh-copy-id root@192.168.101.253
+```
+
+![image-20230727121922086](Linux课程笔记/image-20230727121922086.png)
+
 ## 软件安装命令
 
 ```sh
 #CentOS系统使用
-yum [install remove search] [-y] 软件名称
+yum install/remove/search -y software
 -y 自动确认
+yum install mlocate -y
 
 #Ubuntu系统使用
 apt [install remove search] [-y] 软件名称
@@ -152,7 +163,7 @@ cd ./ 当前 	cd ..上一级
 
 
 
-通过SSH登陆终端后，默认的工作目录是 用户的HOME目录
+通过SSH登陆终端后，默认是 用户的HOME目录
 
 
 
@@ -175,9 +186,12 @@ cd ./ 当前 	cd ..上一级
 ## 特殊路径符
 
 - `.`，  当前目录 	./a.txt 当前文件夹内的`a.txt`文件
+
 - `..`，上级目录      ../../  上级的上级目录
+
 - `~`，  用户的HOME目录 
-- 
+
+  
 
 ## mkdir命令
 
@@ -186,17 +200,15 @@ cd ./ 当前 	cd ..上一级
 语法：`mkdir [-p] 参数`
 
 - 参数：被创建文件夹的路径
-- 选项：-p，可选，表示创建前置路径   mkdir /a/b/c -p
+- 选项：-p，可选，表示**创建前置路径**   **mkdir /a/b/c -p**
 
 
 
 ## touch命令
 
-功能：创建文件
+创建文件
 
-语法：`touch 参数`
-
-- 参数：被创建的文件路径
+touch 被创建的文件路径
 
 ```sh
 touch /etc/docker/daemon.json
@@ -213,9 +225,9 @@ vim /etc/docker/daemon.json
 
 ## cat命令
 
-功能：查看文件内容
+查看文件内容
 
-语法：cat  被查看的文件路径
+cat  被查看的文件路径
 
 ```sh
 cat /etc/docker/daemon.json
@@ -225,9 +237,9 @@ cat /etc/docker/daemon.json
 
 ## more命令
 
-功能：查看文件，可以支持翻页查看
+查看文件，可以支持翻页查看
 
-语法：more 被查看的文件路径
+more 被查看的文件路径
 
 - 在查看过程中：
   - **`空格`键翻页**
@@ -237,9 +249,9 @@ cat /etc/docker/daemon.json
 
 ## cp命令
 
-功能：复制文件、文件夹
+复制文件、文件夹
 
-语法：`cp [-r] source destination`
+`cp [-r] source destination`
 
 - 选项：-r 复制文件夹使用
 
@@ -253,9 +265,9 @@ cat /etc/docker/daemon.json
 
 ## mv命令
 
-功能：移动文件、文件夹
+移动文件、文件夹
 
-语法：`mv source destination`
+`mv source destination`
 
 - 参数1：被移动的
 - 参数2：要移动去的地方，参数2如果不存在，则会进行改名
@@ -637,9 +649,68 @@ GATEWAY="192.168.101.2"		# 网关，要和VMware中配置的一致
 DNS1="192.168.101.2"			# DNS1服务器，和网关一致即可
 ```
 
+## 防火墙
+
+硬件防火墙
+
+软件防火墙
+
+​	iptables
+
+​	firewalld
+
+![image-20230731095016316](Linux课程笔记/image-20230731095016316.png)
+
+
+
+显示当前活动的防火墙配置：
+
+```sh
+sudo firewall-cmd --list-all
+```
+
+
+
+获取特定区域（zone）的配置：
+
+```sh
+sudo firewall-cmd --zone=<zone> --list-all
+```
+
+将 `<zone>` 替换为您要获取配置的区域名称，例如 `public`、`internal` 等。
+
+
+
+临时添加防火墙规则（仅在运行时生效，重启后失效）：
+
+```sh
+sudo firewall-cmd --zone=public --add-port=80/tcp
+sudo firewall-cmd --zone=public --add-service=http
+```
+
+
+
+永久添加防火墙规则（持久生效）：
+
+```sh
+sudo firewall-cmd --zone=<zone> --add-<service/port> --permanent
+```
+
+
+
+移除防火墙规则：
+
+```sh
+sudo firewall-cmd --zone=<zone> --remove-<service/port>
+```
+
+将 `<zone>` 替换为适用的区域名称，`<service/port>` 替换为要移除的服务或端口。
+
 
 
 ## 网络相关命令
+
+![image-20230725103457086](Linux课程笔记/image-20230725103457086.png)
 
 ### 网卡配置
 

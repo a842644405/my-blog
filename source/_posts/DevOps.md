@@ -17,19 +17,19 @@ title: DevOps
 - MONITOR：项目部署上线后，需要持续的监控产品。
 - INTEGRATE：然后将监控阶段收到的反馈发送回PLAN阶段，**整体反复的流程就是DevOps核心，即持续集成、持续部署**。
 
-各个阶段都有比较常见的工具：
+各阶段常见的工具：
 
 |               软件开发过程&涉及工具                |
 | :------------------------------------------------: |
 | ![2021-11-23_175935](DevOps/2021-11-23_175935.png) |
 
-DevOps 通过自动化的工具协作和沟通来完成软件的生命周期管理，从而更快、更频繁地交付更稳定的软件。
+DevOps 通过 自动化工具 协作和沟通 来完成 软件的生命周期管理，从而更快、更频繁地交付更稳定的软件。
 
 
 
 ### 二、Code阶段工具
 
-在code阶段，将不同版本的代码 存储到一个仓库中，常见的**版本控制工具**就是SVN或者**Git**，这里我们采用Git作为版本控制工具，GitLab作为远程仓库。
+code阶段将 不同版本的代码 存储到一个仓库中，常见的**版本控制工具**就是SVN或者**Git**，本次采用**Git作为版本控制工具，GitLab作为远程仓库**。
 
 #### 2.1 Git安装
 
@@ -41,7 +41,7 @@ git remote set-url origin https://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@githu
 
 #### 2.2 GitLab安装
 
-单独准备服务器，采用Docker安装
+单独准备服务器192.168.101.102，采用Docker安装
 
 - 查看GitLab镜像
 
@@ -85,7 +85,7 @@ git remote set-url origin https://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@githu
         - './data:/var/opt/gitlab'
   ```
 
-- 启动容器（需要稍等一小会……）
+- 启动容器
 
   ```sh
   docker compose up -d
@@ -133,11 +133,11 @@ git remote set-url origin https://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@githu
 
 ### 三、Build阶段工具
 
-构建Java项目的工具一般有两种选择，一个是Maven，一个是Gradle。
+构建Java项目的工具一般有两种，Maven Gradle。
 
-这里选择Maven作为项目的编译工具。
+使用maven
 
-下载好maven和jdk8并解压
+下载maven和jdk8并解压
 
 ```shell
 #解压
@@ -146,6 +146,8 @@ tar -zxvf apache-maven-3.5.4-bin.tar.gz -C /usr/local
 
 #配置maven
 vim /usr/local/apache-maven-3.5.4/conf/setting.xml
+
+<localRepository>E:\repository</localRepository>
 <mirror>
   <id>aliyunmaven</id>
   <mirrorOf>*</mirrorOf>
@@ -167,11 +169,11 @@ vim /usr/local/apache-maven-3.5.4/conf/setting.xml
 </profile>
 ```
 
-具体安装Maven流程不做阐述，但是需要确保配置好Maven仓库私服以及JDK编译版本。
+需要确保配置好Maven仓库私服以及JDK编译版本。
 
 ### 四、Operate阶段工具
 
-部署过程，采用Docker部署，暂时只安装Docker即可，后续还需安装Kubenetes
+先采用Docker部署单体架构，后续安装Kubenetes实现分布式架构
 
 #### 4.1 Docker安装
 
@@ -225,6 +227,7 @@ vim /usr/local/apache-maven-3.5.4/conf/setting.xml
   ```sh
   # 所有用户 添加 x权限
   chmod a+x docker-compose-Linux-x86_64 
+  
   # 移动到/usr/bin目录下，并重命名为docker-compose
   mv docker-compose-Linux-x86_64 /usr/bin/docker-compose
   ```
@@ -242,15 +245,15 @@ vim /usr/local/apache-maven-3.5.4/conf/setting.xml
 
 Jenkins是一个开源的持续集成平台。
 
-Jenkins涉及到将开发环境编写完毕的代码发布到测试环境和生产环境的任务，并且还涉及到了构建项目等任务。
+Jenkins涉及到将  开发环境编写完毕的代码  发布到  测试环境和生产环境的任务，并且还涉及到 构建项目等任务。
 
-Jenkins需要大量的插件保证工作，安装成本较高，下面会基于Docker搭建Jenkins。
+Jenkins需大量的插件保证工作，安装成本较高，下面基于Docker搭建Jenkins。
 
 #### 5.1 Jenkins介绍
 
 Jenkins是基于Java开发的持续集成工具
 
-大多数互联网公司都采用Jenkins配合GitLab、Docker、K8s作为实现DevOps的核心工具。
+大多数互联网公司都采用 Jenkins配合GitLab、Docker、K8s作为实现DevOps的核心工具。
 
 Jenkins最强大的就在于**插件**，Jenkins官方提供了大量的插件库，来自动化CI/CD过程中的各种琐碎功能。
 
@@ -258,17 +261,17 @@ Jenkins最强大的就在于**插件**，Jenkins官方提供了大量的插件�
 | :----------------------------------------------------------: | :----------------------------------------------------------: |
 | ![image-20211125141950900](DevOps/image-20211125141950900.png) | ![image-20211124200317795](DevOps/image-20211125141701495.png) |
 
-**Jenkins最主要的工作就是将GitLab上可以构建的工程代码拉取并且进行构建，再根据流程可以选择发布到测试环境或是生产环境。**
+**Jenkins最主要的工作就是 将GitLab上可以构建的工程代码拉取并且进行构建，再根据流程可以选择发布到测试环境或是生产环境。**
 
-一般是GitLab上的代码经过大量的测试后，确定发行版本，再发布到生产环境。
+一般GitLab上的代码经过大量的测试后，确定发行版本，再发布到生产环境。
 
 CI/CD可以理解为：
 
-- CI过程即是通过Jenkins将代码拉取、构建、制作镜像交给测试人员测试。
+- CI过程即是通过 Jenkins将代码拉取、构建、制作镜像交给测试人员测试。
   - 持续集成：让软件代码可以持续的集成到主干上，并自动构建和测试。
-- CD过程即是通过Jenkins将打好标签的发行版本代码拉取、构建、制作镜像交给运维人员部署。
-  - 持续交付：让经过持续集成的代码可以进行手动部署。
-  - 持续部署：让可以持续交付的代码随时随地的自动化部署。
+- CD过程即是通过 Jenkins将打好标签的发行版本代码拉取、构建、制作镜像 交给运维人员部署。
+  - 持续交付：将代码的改动 自动化地构建、测试、打包，并将打包好的可部署文件交到一个人工审核的阶段，由人工决定是否将其部署到生产环境中。
+  - 持续部署：将代码的改动自动化地构建、测试、打包，并自动将打包好的可部署文件部署到生产环境中，**无需人工干预**。
 
 |                            CI、CD                            |
 | :----------------------------------------------------------: |
@@ -283,8 +286,6 @@ CI/CD可以理解为：
   ```sh
   docker search jenkins
   docker pull jenkins/jenkins:2.346.3-lts-jdk8
-  
-  
   
   docker run -d \
     -v /usr/local/docker/jenkins18080:/var/jenkins_home \
@@ -885,13 +886,34 @@ Jenkins继承Sonar Qube实现代码扫描需要先下载整合插件
 
 #### 8.1 Harbor介绍
 
-前面在部署项目时，我们主要采用Jenkins推送jar包到指定服务器，再通过脚本命令让目标服务器对当前jar进行部署，这种方式在项目较多时，每个目标服务器都需要将jar包制作成自定义镜像再通过docker进行启动，重复操作比较多，会降低项目部署时间。
+前面部署项目时，采用**Jenkins推送jar包到指定服务器**，再通过脚本命令让目标服务器对当前jar进行部署，
 
-我们可以通过Harbor作为私有的Docker镜像仓库。让Jenkins统一将项目打包并制作成Docker镜像发布到Harbor仓库中，只需要通知目标服务，让目标服务统一去Harbor仓库上拉取镜像并在本地部署即可。
+这种方式在项目较多时，每个**目标服务器都需要将jar包制作成自定义镜像再通过docker进行启动**，重复操作比较多，会降低项目部署时间。
 
-Docker官方提供了Registry镜像仓库，但是Registry的功能相对简陋。Harbor是VMware公司提供的一款镜像仓库，提供了权限控制、分布式发布、强大的安全扫描与审查机制等功能
+优化：
 
-#### 8.2 Harbor安装
+通过Harbor作为私有的Docker镜像仓库。让**Jenkins统一将项目打包并制作成Docker镜像 发布到Harbor仓库中**，只需要通知目标服务器统一去Harbor仓库上拉取镜像并在本地部署即可。
+
+Docker官方提供了**Registry**镜像仓库，但是Registry的功能相对简陋。**Harbor**是VMware公司提供的一款镜像仓库，提供了权限控制、分布式发布、强大的安全扫描与审查机制等功能
+
+#### 8.2 Harbor拆卸及安装
+
+```sh
+#uninstall
+  docker-compose down -v
+  cd /data
+  rm -rf /data/{database,data,registry,redis}
+  rm -rf /etc/docker/certs.d/{harbor_hostname,harbor_hostname:port}
+  rm -rf /usr/local/bin/harbor*
+  rm -rf /etc/harbor/
+  cd  /etc/docker/certs.d
+  rm -rf 192.168.101.253/
+  rm -rf harbor.vj.com/
+  rm -rf /etc/nginx/conf.d/harbor.*
+  rm -rf /etc/nginx/ssl/harbor.*
+```
+
+
 
 这里采用原生的方式安装Harbor。
 
@@ -908,7 +930,8 @@ Docker官方提供了Registry镜像仓库，但是Registry的功能相对简陋�
   - 首先复制一份harbor.yml配置
 
     ```sh
-    cp harbor.yml.tmpl harbor.yml
+    cp  harbor.yml harbor.yml.bak
+    vim harbor.yml
     ```
 
   - 编辑harbor.yml配置文件
@@ -920,7 +943,7 @@ Docker官方提供了Registry镜像仓库，但是Registry的功能相对简陋�
 - 启动Harbor
 
   ```sh
-  ./install.sh
+  /usr/local/harbor/install.sh
   ```
 
   |                           查看日志                           |
