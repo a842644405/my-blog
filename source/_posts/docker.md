@@ -226,6 +226,22 @@ https://docs.docker.com/engine/install/centos/
 
 
 
+```sh
+#Set up the repository
+sudo yum install -y yum-utils
+sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+#To install a specific version, start by listing the available versions in the repository
+yum list docker-ce --showduplicates | sort -r
+
+#<tag>替换为对应版本
+sudo yum install docker-ce-<tag> docker-ce-cli-<tag> containerd.io docker-buildx-plugin docker-compose-plugin
+
+sudo systemctl start docker
+```
+
+
+
 # 2.Docker的基本操作
 
 ## 2.1.镜像操作
