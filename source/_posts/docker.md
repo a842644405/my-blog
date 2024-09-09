@@ -6,13 +6,11 @@ title: Docker
 
 # 1.初识Docker
 
-
-
 ### 1.1.1.应用部署的环境问题
 
-大型项目组件 多，运行环境 复杂，部署碰到问题：
+大型项目 组件多，运行环境 复杂，部署碰到问题：
 
-- 依赖关系复杂，出现兼容性问题
+- 依赖关系 复杂，出现 兼容性问题
 
 - 开发、测试、生产环境 有差异
 
@@ -22,15 +20,15 @@ title: Docker
 
 
 
-一个项目中，部署需要依赖node.js、Redis、RabbitMQ、MySQL等，这些服务部署所需要的函数库、依赖项各不相同，甚至会有冲突。给部署带来困难。
+一个项目中，部署需要依赖node.js、Redis、RabbitMQ、MySQL等，这些服务部署所需的函数库、依赖项各不相同，甚至会有冲突，给部署带来困难。
 
 
 
 ### 1.1.2.Docker解决依赖兼容问题
 
-Docker为了解决依赖的兼容问题的，采用 两个手段：
+Docker为解决依赖的兼容问题的，采用 两个手段：
 
-- 将应用的Libs（函数库）、Deps（依赖）、配置与应用一起打包
+- 将 应用的Libs（函数库）、Deps（依赖）、配置与应用 一起打包
 
 - 将每个应用放到一个隔离**容器**去运行，避免互相干扰
 
@@ -40,11 +38,7 @@ Docker为了解决依赖的兼容问题的，采用 两个手段：
 
 这样打包好的应用包中，包含应用本身，应用所需要的Libs、Deps，无需再操作系统上安装这些，自然就不存在不同应用之间的兼容问题了。
 
-
-
 虽然解决了兼容问题，但是开发、测试等环境依然有差异
-
-
 
 ### 1.1.3.Docker解决操作系统环境差异
 
@@ -58,7 +52,7 @@ Docker为了解决依赖的兼容问题的，采用 两个手段：
 
 - 计算机硬件：例如CPU、内存、磁盘等
 - 系统内核：所有Linux发行版的内核都是Linux，例如CentOS、Ubuntu、Fedora等。内核与计算机硬件交互，通过**内核指令**操作计算机硬件。
-- 系统应用：操作系统自带的应用、函数库。这些**函数库是对内核指令的封装**。
+- 系统应用：操作系统自带的应用、函数库。这些**函数库是对内核指令的封装**。centos和ubuntu对内核指令的封装不同
 
 
 
@@ -106,31 +100,25 @@ Docker如何解决？
 
 Docker是一个快速交付应用、运行应用的技术，具备下列优势：
 
-- 可以将程序及其依赖、运行环境一起打包为一个镜像，可以迁移到任意Linux操作系统
-- 运行时利用沙箱机制形成隔离容器，各个应用互不干扰
+- 可以 将 程序及其依赖、运行环境 一起打包为一个镜像，可以迁移到任意Linux操作系统
+- 运行时 利用沙箱机制 形成 隔离容器，各个应用 互不干扰
 - 启动、移除都可以通过一行命令完成，方便快捷
 
 
 
 ## 1.2.Docker和虚拟机的区别
 
-Docker可以让一个应用在任何操作系统中非常方便的运行。而以前我们接触的虚拟机，也能在一个操作系统中，运行另外一个操作系统，保护系统中的任何应用。
+**虚拟机**（virtual machine）是在操作系统中**模拟**硬件设备，然后运行另一个操作系统
 
+比如在 Windows 系统里面运行 Ubuntu 系统，这样就可以运行任意的Ubuntu应用了。
 
-
-两者有什么差异呢？
-
-
-
-**虚拟机**（virtual machine）是在操作系统中**模拟**硬件设备，然后运行另一个操作系统，比如在 Windows 系统里面运行 Ubuntu 系统，这样就可以运行任意的Ubuntu应用了。
-
-**Docker**仅仅是封装函数库，并没有模拟完整的操作系统，如图：
+**Docker**是封装函数库，并没有模拟完整的操作系统，如图：
 
 ![image-20210731145914960](docker/image-20210731145914960.png)
 
 对比来看：
 
-![image-20210731152243765](docker/image-20210731152243765.png)
+<img src="docker/image-20210731152243765.png" alt="image-20210731152243765" style="zoom: 33%;" />
 
 
 
@@ -182,7 +170,7 @@ Docker和虚拟机的差异：
 
 ### 1.3.3.Docker架构
 
-Docker是一个CS架构的程序，由两部分组成：
+CS架构：
 
 - 服务端(server)：Docker守护进程，负责处理Docker指令，管理镜像、容器等
 
@@ -196,64 +184,91 @@ Docker是一个CS架构的程序，由两部分组成：
 
 ### 1.3.4.小结
 
-
-
 镜像：
 
-- 将应用程序及其依赖、环境、配置打包在一起
+​	将应用程序及其依赖、环境、配置打包在一起
 
 容器：
 
-- 镜像运行起来就是容器，一个镜像可以运行多个容器
+​	镜像运行后，一个镜像可以运行多个容器
 
-Docker结构：
+Docker架构：
 
-- 服务端：接收命令或远程请求，操作镜像或容器
+​	服务端：接收命令或远程请求，操作镜像或容器
 
-- 客户端：发送命令或者请求到Docker服务端
+​	客户端：发送命令或者请求到Docker服务端
 
 DockerHub：
 
-- 一个镜像托管的服务器，类似的还有阿里云镜像服务，统称为DockerRegistry
+​	镜像托管的服务器，类似的还有阿里云镜像服务，统称为 DockerRegistry
 
 
 
 ## 1.4.安装Docker
 
-企业部署一般采用Linux操作系统，而其中又数CentOS发行版占比最多，因此我们在CentOS下安装Docker。
+CentOS下安装Docker。
+
+官方安装链接
 
 https://docs.docker.com/engine/install/centos/
 
-
+1.脚本快速安装
 
 ```sh
-#Set up the repository
-sudo yum install -y yum-utils
-sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+#Docker Engine安装
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
 
-#To install a specific version, start by listing the available versions in the repository
-yum list docker-ce --showduplicates | sort -r
-
-#<tag>替换为对应版本
-sudo yum install docker-ce-<tag> docker-ce-cli-<tag> containerd.io docker-buildx-plugin docker-compose-plugin
-
-sudo systemctl start docker
+#Docker Compose安装
+curl -SL https://github.com/docker/compose/releases/download/v2.26.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
 ```
 
 
 
-# 2.Docker的基本操作
+2.仓库安装
+
+```sh
+#Set up the repository for download docker
+sudo yum install -y yum-utils
+sudo yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+
+#To install a specific version, start by listing the available versions in the repository
+#yum list docker-ce --showduplicates | sort -r
+
+#<tag>替换为对应版本
+#sudo yum install docker-ce-<tag> docker-ce-cli-<tag> containerd.io docker-buildx-plugin docker-compose-plugin
+
+sudo yum install -y docker-ce-24.0.0  docker-ce-cli-24.0.0  containerd.io docker-buildx-plugin docker-compose-plugin
+sudo yum remove -y docker-ce-20.10.9  docker-ce-cli-20.10.9  containerd.io docker-buildx-plugin docker-compose-plugin
+
+#给docker配置阿里云镜像源
+sudo mkdir -p /etc/docker
+
+sudo tee /etc/docker/daemon.json <<-'EOF'
+{
+  "registry-mirrors": [
+    "https://dockerproxy.com",
+    "https://hub-mirror.c.163.com",
+    "https://mirror.baidubce.com",
+    "https://ccr.ccs.tencentyun.com"
+  ]
+}
+EOF
+
+sudo systemctl start docker
+```
+
+# 2.Docker操作
 
 ## 2.1.镜像操作
 
-
-
 ### 2.1.1.镜像名称
 
-- 镜名称一般分两部分组成：[repository]:[tag]。
-- 在没有指定tag时，默认是latest，代表最新版本的镜像
+repository:tag
 
+- 在没有指定tag时，默认是latest
 
+docker images
 
 ![1682673267683](docker/1682673267683.png)
 
@@ -267,9 +282,9 @@ sudo systemctl start docker
 
 ### 2.1.3.拉取、查看镜像
 
-需求：从DockerHub中拉取一个nginx镜像并查看
+从DockerHub中拉取nginx镜像
 
-1）首先去镜像仓库搜索nginx镜像，比如[DockerHub](https://hub.docker.com/):
+1）DockerHub 搜索 nginx 镜像
 
 ![image-20210731155844368](docker/image-20210731155844368.png)
 
@@ -277,7 +292,7 @@ sudo systemctl start docker
 
 ![image-20210731155856199](docker/image-20210731155856199.png)
 
-3）docker images 查看拉取到的镜像
+3）docker images 
 
 ![image-20210731155903037](docker/image-20210731155903037.png)
 
@@ -290,47 +305,29 @@ docker save -o nginx.tar nginx:latest
 docker load -i nginx.tar
 ```
 
-
-
-需求：利用docker save将nginx镜像导出磁盘，然后再通过load加载回来
-
-1）利用docker xx --help命令查看docker save和docker load的语法
-
-例如，查看save命令用法，可以输入命令：
+查看save用法
 
 ```sh
 docker save --help
 ```
 
-结果：
-
 ![image-20210731161104732](docker/image-20210731161104732.png)
 
 
-
-命令格式：
 
 ```shell
 docker save -o [保存的目标文件名称] [镜像名称]
 ```
 
-
-
-2）使用docker save导出镜像到磁盘 
-
-运行命令：
-
 ```sh
 docker save -o /root/nginx.tar nginx:latest
 ```
-
-结果如图：
 
 ![image-20210731161354344](docker/image-20210731161354344.png)
 
 
 
-3）使用docker load加载镜像
+使用docker load加载镜像
 
 先删除本地的nginx镜像：
 
@@ -338,27 +335,17 @@ docker save -o /root/nginx.tar nginx:latest
 docker rmi nginx:latest
 ```
 
-
-
-然后运行命令，加载本地文件：
+再加载本地文件：
 
 ```sh
 docker load -i nginx.tar
 ```
 
-结果：
-
 ![image-20210731161746245](docker/image-20210731161746245.png)
 
 
 
-
-
-### 2.1.5.练习
-
-需求：去DockerHub搜索并拉取一个Redis镜像
-
-目标：
+需求：DockerHub搜索并拉取一个Redis镜像
 
 1）去DockerHub搜索Redis镜像
 
@@ -366,11 +353,19 @@ docker load -i nginx.tar
 
 3）利用docker pull命令拉取镜像
 
-4）利用docker save命令将 redis:latest打包为一个redis.tar包
+docker pull redis:6.0
 
-5）利用docker rmi 删除本地的redis:latest
+4）利用docker save命令将 redis:6.0 打包为一个 redis6.0.tar 包
 
-6）利用docker load 重新加载 redis.tar文件
+docker save -o redis6.0.tar  redis:6.0
+
+5）利用docker rmi 删除本地的redis:6.0
+
+docker rmi redis:6.0
+
+6）利用docker load 重新加载 redis6.0.tar文件
+
+docker load  -i redis6.0.tar
 
 
 
@@ -378,19 +373,15 @@ docker load -i nginx.tar
 
 ### 2.2.1.容器相关命令
 
-容器操作的命令如图：
-
 ![image-20210731161950495](docker/image-20210731161950495.png)
 
-容器保护三个状态：
+容器的三状态
 
 - 运行（up）：进程正常运行
 - 暂停（suspend）：进程暂停，CPU不再运行，并不释放内存
 - 停止(halt)：进程终止，回收进程占用的内存、CPU等资源
 
 
-
-其中：
 
 - docker run：创建并运行一个容器，处于运行状态
 - docker pause：让一个运行的容器暂停
@@ -404,71 +395,61 @@ docker load -i nginx.tar
 
 ### 2.2.2.案例-创建并运行一个容器
 
-创建并运行nginx容器的命令：
+通过镜像运行容器
 
 ```sh
-docker run --name mn -p 80:80 -d nginx
+docker run --name nginx -p 80:80 -d nginx:1.21
 ```
 
-命令解读：
+docker run  创建并运行一个容器
 
-- docker run ：创建并运行一个容器
-- --name : 给容器命名，比如叫做mn
-- -p ：宿主机端口：容器端口
-- -d：后台运行容器
-- nginx：镜像名称，例如nginx
+--name   给容器命名
+
+-p  宿主机端口：容器端口
+
+-d  后台运行容器
+
+nginx:1.21 镜像名称
 
 
 
-这里的`-p`参数，是将容器端口映射到宿主机端口。
+默认情况下，容器是隔离环境，直接访问宿主机的80端口，肯定访问不到容器中的nginxde 80端口。
 
-默认情况下，容器是隔离环境，我们直接访问宿主机的80端口，肯定访问不到容器中的nginx。
-
-现在，将容器的80与宿主机的80关联起来，当我们访问宿主机的80端口时，就会被映射到容器的80，这样就能访问到nginx了：
+现在，将容器的80与宿主机的80关联，访问宿主机的80会被映射到容器的80，成功访问到nginx：
 
 ![image-20210731163255863](docker/image-20210731163255863.png)
 
 
 
-### 2.2.3.案例-进入容器，修改文件
+### 2.2.3.进入容器，修改文件
 
 **需求**：进入Nginx容器，修改HTML文件内容，添加“传智教育欢迎您”
 
-**提示**：进入容器要用到docker exec命令。
-
-
-
-**步骤**：
-
-1）进入容器。进入我们刚刚创建的nginx容器的命令为：
+1）进入Nginx容器
 
 ```sh
-docker exec -it mn bash
+docker exec -it nginx bash
 ```
-
-命令解读：
 
 - docker exec ：进入容器内部，执行一个命令
 
 - -it : 给当前进入的容器创建一个标准输入、输出终端，允许我们与容器交互
 
-- mn ：要进入的容器的名称
+- nginx：要进入的容器的名称
 
-- bash：进入容器后执行的命令，bash是一个linux终端交互命令
-
-
+- bash：进入容器后执行的命令 
 
 2）进入nginx的HTML所在目录 /usr/share/nginx/html
 
-容器内部会模拟一个独立的Linux文件系统，看起来如同一个linux服务器一样：
+容器内部会模拟一个独立的Linux文件系统
 
 ![image-20210731164159811](docker/image-20210731164159811.png)
 
-nginx的环境、配置、运行文件全部都在这个文件系统中，包括我们要修改的html文件。
+nginx的环境、配置、运行文件  都在这个文件系统中，包括我们要修改的html文件。
 
 查看DockerHub网站中的nginx页面，可以知道nginx的html目录位置在`/usr/share/nginx/html`
 
-我们执行命令，进入该目录：
+
 
 ```sh
 cd /usr/share/nginx/html
@@ -480,11 +461,9 @@ cd /usr/share/nginx/html
 
 
 
-
-
 3）修改index.html的内容
 
-容器内没有vi命令，无法直接修改，我们用下面的命令来修改：
+容器内没有vi命令，用下面的命令来修改：
 
 ```sh
 sed -i -e 's#Welcome to nginx#传智教育欢迎您#g' -e 's#<head>#<head><meta charset="utf-8">#g' index.html
@@ -492,7 +471,7 @@ sed -i -e 's#Welcome to nginx#传智教育欢迎您#g' -e 's#<head>#<head><meta 
 
 
 
-在浏览器访问自己的虚拟机地址，例如我的是：http://192.168.150.101，即可看到结果：
+在浏览器访问**自己的宿主机地址**，即可看到结果：
 
 ![image-20210731164717604](docker/image-20210731164717604.png)
 
@@ -500,21 +479,31 @@ sed -i -e 's#Welcome to nginx#传智教育欢迎您#g' -e 's#<head>#<head><meta 
 
 ### 2.2.4.小结
 
-docker run命令的常见参数有哪些？
+docker run命令的常见参数
 
-- --name：指定容器名称
-- -p：指定端口映射
-- -d：让容器后台运行
+--name 指定容器名称
+
+-p 		 指定端口映射
+
+-d  	    让容器后台运行
 
 查看容器日志的命令：
 
-- docker logs
-- 添加 -f 参数可以持续查看日志
+docker logs nginx
+
+docker logs -f nginx
+
+-f  持续查看日志
+
+
 
 查看容器状态：
 
-- docker ps
-- docker ps -a 查看所有容器，包括已经停止的
+docker ps
+
+docker ps -a 查看所有容器，包括已经停止的
+
+
 
 ### 2.2.5 安装pg
 
@@ -580,7 +569,7 @@ docker volume命令是数据卷操作，根据命令后跟随的command来确定
 
 **需求**：创建一个数据卷，并查看数据卷在宿主机的目录位置
 
-① 创建数据卷
+① 创建 数据卷
 
 ```sh
 docker volume create html
@@ -588,7 +577,7 @@ docker volume create html
 
 
 
-② 查看所有数据
+② 查看 所有数据
 
 ```sh
 docker volume ls
@@ -602,7 +591,7 @@ docker volume ls
 
 
 
-③ 查看数据卷详细信息卷
+③ 查看 数据卷详细信息卷
 
 ```sh
 docker volume inspect html
@@ -622,17 +611,23 @@ docker volume inspect html
 
 **小结**：
 
-数据卷的作用：
+数据卷的作用
 
-- 将容器与数据分离，解耦合，方便操作容器内数据，保证数据安全
+将 容器与数据 分离，解耦合，方便操作容器内数据，保证数据安全
 
-数据卷操作：
 
-- docker volume create：创建数据卷
-- docker volume ls：查看所有数据卷
-- docker volume inspect：查看数据卷详细信息，包括关联的宿主机目录位置
-- docker volume rm：删除指定数据卷
-- docker volume prune：删除所有未使用的数据卷
+
+数据卷操作
+
+```sh
+docker volume create #创建数据卷
+docker volume ls 	 #查看所有数据卷
+docker volume inspect#查看数据卷详细信息，包括关联的宿主机目录位置
+docker volume rm 	 #删除指定数据卷
+docker volume prune  #删除所有未使用的数据卷
+```
+
+
 
 
 
@@ -648,9 +643,9 @@ docker run \
   nginx \
 ```
 
-这里的-v就是挂载数据卷的命令：
+-v 挂载数据卷
 
-- `-v html:/root/htm` ：把html数据卷挂载到容器内的/root/html这个目录中
+- `-v html:/root/htm`  把 本地html数据卷 挂载到 容器内的/root/html 
 
 
 
@@ -752,9 +747,9 @@ docker run的命令中通过 -v 参数挂载文件或目录到容器中：
 
 # 3.Dockerfile自定义镜像
 
-常见的镜像在DockerHub就能找到，但是 自己写的项 目就必须 自己构建镜像了。
+常见的镜像在DockerHub就能找到，但 自己写的项目  就必须自己 构建镜像。
 
-而要自定义镜像，就必须先了解镜像的结构才行。
+而要 自定义镜像，就必须先了解 镜像的结构 才行。
 
 ## 3.1.镜像结构
 
@@ -766,11 +761,11 @@ docker run的命令中通过 -v 参数挂载文件或目录到容器中：
 
 
 
-简单来说，镜像就是在 系统函数库、运行环境基础上，添加应用程序文件、配置文件、依赖文件等组合，然后编写好 启动脚本打包在一起形成的文件。
+简单来说，镜像 就是在  **系统函数库、运行环境基础上，添加应用程序文件、配置文件、依赖文件等组合**，然后编写好 启动脚本 打包在一起形成的文件。
 
 
 
-我们要构建镜像，其实就是实现上述打包的过程。
+我们要 构建镜像，就是实现上述 打包的过程。
 
 
 
@@ -778,23 +773,25 @@ docker run的命令中通过 -v 参数挂载文件或目录到容器中：
 
 构建自定义的镜像时，并不需要一个个文件去拷贝，打包。
 
-我们只需要告诉Docker，我们的镜像的组成，需要哪些BaseImage、需要拷贝什么文件、需要安装什么依赖、启动脚本是什么，将来Docker会帮助我们构建镜像。
+只需要告诉Docker，
+
+镜像的组成，需要哪些BaseImage、需要拷贝什么文件、需要安装什么依赖、启动脚本是什么，
+
+将来Docker会帮助我们构建镜像。
 
 
 
-而描述上述信息的文件就是Dockerfile文件。
+而描述上述信息的文件 就是 Dockerfile文件。
 
 
 
-**Dockerfile**就是一个文本文件，其中包含一个个的**指令(Instruction)**，用指令来说明要执行什么操作来构建镜像。每一个指令都会形成一层Layer。
+**Dockerfile** 是一个文本文件，包含 一个个的**指令(Instruction)**，用指令来说明要执行什么操作来构建镜像。每一个指令都会形成一层Layer。
 
 ![image-20210731180321133](docker/image-20210731180321133.png)
 
 
 
 更新详细语法说明，请参考官网文档： https://docs.docker.com/engine/reference/builder
-
-
 
 
 
@@ -808,15 +805,15 @@ docker run的命令中通过 -v 参数挂载文件或目录到容器中：
 
 需求：基于Ubuntu镜像构建一个新镜像，运行一个java项目
 
-- 步骤1：新建一个空文件夹docker-demo
+- 步骤1 新建一个空文件夹docker-demo
 
   ![image-20210801101207444](docker/image-20210801101207444.png)
 
-- 步骤2：拷贝课前资料中的docker-demo.jar文件到docker-demo这个目录
+- 步骤2 拷贝课前资料中的docker-demo.jar文件到docker-demo这个目录
 
   ![image-20210801101314816](docker/image-20210801101314816.png)
 
-- 步骤3：拷贝课前资料中的jdk8.tar.gz文件到docker-demo这个目录
+- 步骤3：拷贝课前资料中的 jdk8.tar.gz文件 到 docker-demo这个目录
 
   ![image-20210801101410200](docker/image-20210801101410200.png)
 
@@ -829,6 +826,7 @@ docker run的命令中通过 -v 参数挂载文件或目录到容器中：
   ```dockerfile
   # 指定基础镜像
   FROM ubuntu:16.04
+  
   # 配置环境变量，JDK的安装目录
   ENV JAVA_DIR=/usr/local
   
@@ -847,6 +845,7 @@ docker run的命令中通过 -v 参数挂载文件或目录到容器中：
   
   # 暴露端口
   EXPOSE 8090
+  
   # 入口，java项目的启动命令
   ENTRYPOINT java -jar /tmp/app.jar
   ```
@@ -856,6 +855,8 @@ docker run的命令中通过 -v 参数挂载文件或目录到容器中：
 - 步骤5：进入docker-demo
 
   将准备好的docker-demo上传到虚拟机任意目录，然后进入docker-demo目录下
+
+  
 
 - 步骤6：运行命令：
 
@@ -926,13 +927,13 @@ docker run的命令中通过 -v 参数挂载文件或目录到容器中：
 
 # 4.Docker-Compose
 
-Docker Compose可以基于Compose文件帮我们快速的部署分布式应用，而无需手动一个个创建和运行容器！
+Docker Compose基于 Compose文件 快速部署分布式应用，而无需手动一个个创建和运行容器！
 
 ![image-20210731180921742](docker/image-20210731180921742.png)
 
 ## 4.1.初识DockerCompose
 
-Compose文件是一个文本文件，通过指令定义集群中的每个容器如何运行。格式如下：
+Compose文件是一个文本文件,定义集群中的每个容器如何运行。格式如下：
 
 ```json
 version: "3.8"
@@ -960,15 +961,19 @@ version: "3.8"
 
 DockerCompose的详细语法参考官网：https://docs.docker.com/compose/compose-file/
 
-
-
-其实DockerCompose文件可以看做是将多个docker run命令写到一个文件，只是语法稍有差异。
+DockerCompose文件可以看做是将 多个docker run命令 写到一个文件。
 
 
 
 ## 4.2.安装DockerCompose
 
-参考课前资料
+```
+curl -SL https://github.com/docker/compose/releases/download/v2.17.2/docker-compose-linux-x86_64 -o /usr/local/bin
+# 所有用户 添加 x权限
+chmod +x /usr/local/bin/docker-compose
+
+docker-compose version
+```
 
 
 

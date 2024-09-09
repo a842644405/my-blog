@@ -49,7 +49,7 @@ git remote set-url origin https://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@githu
   docker search gitlab
   ```
 
-- 拉取GitLab镜像
+- 拉取GitLab官方镜像
 
   ```sh
   docker pull gitlab/gitlab-ce
@@ -61,10 +61,9 @@ git remote set-url origin https://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@githu
   mkdir /usr/local/docker   
   mkdir /usr/local/docker/gitlab_docker
   cd /usr/local/docker/gitlab_docker
-  
   vim docker-compose.yml 
   ```
-
+  
   ```yml
   version: '3.1'
   services:
@@ -83,18 +82,17 @@ git remote set-url origin https://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@githu
         - './config:/etc/gitlab'
         - './logs:/var/log/gitlab'
         - './data:/var/opt/gitlab'
+        - '/etc/localtime:/etc/localtime'
   ```
-
+  
 - 启动容器
 
   ```sh
   docker compose up -d
   docker compose logs -f gitlab 
-  #日志时间不对挂载时间文件
-  -v /etc/localtime:/etc/localtime
   ```
-
-- 访问GitLab首页 192.168.101.102:8989
+  
+- 访问GitLab首页 192.168.101.102:8929
 
   |                             首页                             |
   | :----------------------------------------------------------: |
@@ -133,9 +131,9 @@ git remote set-url origin https://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@githu
 
 ### 三、Build阶段工具
 
-构建Java项目的工具一般有两种，Maven Gradle。
+构建Java项目的工具有两种 Maven 和 Gradle
 
-使用maven
+本次使用maven
 
 下载maven和jdk8并解压
 
@@ -177,7 +175,7 @@ vim /usr/local/apache-maven-3.5.4/conf/setting.xml
 
 #### 4.1 Docker安装
 
-详见官网
+详见官网https://docs.docker.com/engine/install/centos/
 
 - 下载Docker依赖组件
 
@@ -243,9 +241,9 @@ vim /usr/local/apache-maven-3.5.4/conf/setting.xml
 
 ### 五、Integrate工具
 
-Jenkins是一个开源的持续集成平台。
+Jenkins是一个开源的持续集成平台。CI
 
-Jenkins涉及到将  开发环境编写完毕的代码  发布到  测试环境和生产环境的任务，并且还涉及到 构建项目等任务。
+Jenkins涉及到将  开发环境 编写的代码  发布到  测试环境和生产环境 的任务，还涉及到 构建项目等任务。
 
 Jenkins需大量的插件保证工作，安装成本较高，下面基于Docker搭建Jenkins。
 
@@ -253,25 +251,25 @@ Jenkins需大量的插件保证工作，安装成本较高，下面基于Docker�
 
 Jenkins是基于Java开发的持续集成工具
 
-大多数互联网公司都采用 Jenkins配合GitLab、Docker、K8s作为实现DevOps的核心工具。
+大多数互联网公司都采用 Jenkins 配合GitLab、Docker、K8s 作为实现DevOps的核心工具。
 
-Jenkins最强大的就在于**插件**，Jenkins官方提供了大量的插件库，来自动化CI/CD过程中的各种琐碎功能。
+Jenkins最强大的就在于**插件**，官方提供了大量的插件库，来自动化CI/CD过程中的各种琐碎功能。
 
 |                                                              |                                                              |
 | :----------------------------------------------------------: | :----------------------------------------------------------: |
 | ![image-20211125141950900](DevOps/image-20211125141950900.png) | ![image-20211124200317795](DevOps/image-20211125141701495.png) |
 
-**Jenkins最主要的工作就是 将GitLab上可以构建的工程代码拉取并且进行构建，再根据流程可以选择发布到测试环境或是生产环境。**
+**Jenkins最主要的工作就是 将 GitLab上 可以构建的工程代码 拉取并且进行构建，再根据 流程 可以选择发布到测试环境或是生产环境。**
 
 一般GitLab上的代码经过大量的测试后，确定发行版本，再发布到生产环境。
 
 CI/CD可以理解为：
 
-- CI过程即是通过 Jenkins将代码拉取、构建、制作镜像交给测试人员测试。
+- CI过程 通过Jenkins将代码拉取、构建、制作镜像交给**测试人员测试**。
   - 持续集成：让软件代码可以持续的集成到主干上，并自动构建和测试。
-- CD过程即是通过 Jenkins将打好标签的发行版本代码拉取、构建、制作镜像 交给运维人员部署。
-  - 持续交付：将代码的改动 自动化地构建、测试、打包，并将打包好的可部署文件交到一个人工审核的阶段，由人工决定是否将其部署到生产环境中。
-  - 持续部署：将代码的改动自动化地构建、测试、打包，并自动将打包好的可部署文件部署到生产环境中，**无需人工干预**。
+- CD过程 通过Jenkins将打好标签的发行版本代码拉取、构建、制作镜像 交给 **运维人员部署**。
+  - 持续交付：将代码的改动 自动化地构建、测试、打包，并将打包好的可部署文件交到一个**人工审核**的阶段，由人工决定是否将其部署到生产环境中。
+  - 持续部署：将代码的改动 自动化地构建、测试、打包，并自动将打包好的可部署文件部署到生产环境中，**无需人工干预**。
 
 |                            CI、CD                            |
 | :----------------------------------------------------------: |
@@ -280,6 +278,8 @@ CI/CD可以理解为：
 
 
 #### 5.2 Jenkins安装
+
+使用服务器192.168.101.103
 
 - 拉取Jenkins镜像
 
@@ -317,22 +317,27 @@ CI/CD可以理解为：
   sed -i 's#https://updates.jenkins.io/download#https://mirrors.tuna.tsinghua.edu.cn/jenkins#g' default.json
   sed -i 's#http://www.google.com#https://www.baidu.com#g' default.json
   
-  #
-cp -r /usr/local/jdk /usr/local/docker/jenkins18080
+  #将jdk8和maven添加到jenkins插件目录中（后续需要挂载的目录）
+  cp -r /usr/local/jdk /usr/local/docker/jenkins18080
   cp -r /usr/local/maven /usr/local/docker/jenkins18080
-
+  
   ```
   
   
   
 - 编写docker-compose.yml（本次未使用docke compose启动容器）
 
-- cd /usr/local/docker
-mkdir /usr/local/docker/jenkins_docker
+  ```
+  cd /usr/local/docker
+  mkdir /usr/local/docker/jenkins_docker
   mkdir /usr/local/docker/jenkins_docker/data
+  chmod -R 777 ./jenkins_docker/data/
+  ```
+
   
+
 - ```yml
-version: "3.1"
+  version: "3.1"
   services:
     jenkins:
       image: jenkins/jenkins:2.346.3-lts-jdk8
@@ -342,11 +347,11 @@ version: "3.1"
         - 18080:8080
         - 50000:50000
       volumes:
-        - /usr/local/docker/jenkins18080:/var/jenkins_home
+        - /usr/local/docker/jenkins18080:/var/jenkins_home #/var/jenkins_home/ 插件 项目在这
         - /usr/bin/docker:/usr/bin/docker
         - /var/run/docker.sock:/var/run/docker.sock
         - /etc/docker/daemon.json:/etc/docker/daemon.json
-        #/var/jenkins_home/ 插件 项目在这
+        
   ```
   
 - 首次启动会因为数据卷data目录没有权限导致启动失败，设置data目录写权限
@@ -383,7 +388,7 @@ version: "3.1"
     </site>
   </sites>
   
-  # 清华大学的插件源也可以https://mirrors.tuna.tsinghua.edu.cn/jenkins/updates/update-center.json
+  # 清华大学的插件源 https://mirrors.tuna.tsinghua.edu.cn/jenkins/updates/update-center.json
   sed 's/被替换/替换/g'
   
   ```
@@ -400,6 +405,12 @@ version: "3.1"
   ```sh
   docker exec -it jenkins cat /var/jenkins_home/secrets/initialAdminPassword
   ```
+
+  新建用户密码
+
+  root 
+
+  root
 
   |                        登录并下载插件                        |
   | :----------------------------------------------------------: |
@@ -429,7 +440,7 @@ version: "3.1"
 
 ##### 5.3.1 构建任务
 
-**准备好GitLab仓库中的项目**，并且通过Jenkins配置项目的实现当前项目的DevOps基本流程。
+**准备好GitLab仓库中的项目**，并通过Jenkins配置项目的实现当前项目的DevOps基本流程。
 
 - 构建Maven工程发布到GitLab（Gitee、Github均可）
 

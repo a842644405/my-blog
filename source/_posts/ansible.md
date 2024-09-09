@@ -23,32 +23,35 @@ date: 2023-06-01 15:50:36
 #修改主配置文件
 vim /etc/ansible/ansible.cfg
 
-#禁用每次执行ansbile命令检查ssh key host 
+#禁用每次执行ansbile命令检查ssh key host （默认值不用修改）
 host_key_checking = False
-
-#记录日志
+#记录日志（默认值不用修改）
 log_path = /var/log/ansible.log
 
 #inventory目录 配置被管理的主机
 vim /etc/ansible/hosts
-
+## [webservers]
+## alpha.example.org
+## beta.example.org
+## 192.168.1.100
+## 192.168.1.110
+[test] #test group
+192.168.101.11
+192.168.101.12
 ```
 
 
 
-
-
-### ssh免密登录
+### ssh免密登录（推荐）
 
 ```sh
-#ansible主机生成密钥对 
+#ansible master生成密钥对 
 ssh-keygen -t rsa
 ls /root/.ssh
 id_rsa(privite key)  id_rsa.pub
 
 #发送公钥到远程主机
 ssh-copy-id -i /root/.ssh/id_rsa.pub root@192.168.101.11
-
 ssh-copy-id -i /root/.ssh/id_rsa.pub root@192.168.101.12
 ```
 
@@ -68,7 +71,6 @@ mem2 ansible_ssh_host="192.168.14.131" ansible_ssh_user="root" ansible_ssh_pass=
 
 #远端机器ssh的端口为var时，需多加一条配置
 ansible_ssh_port=var
-
 ```
 
 
@@ -91,7 +93,7 @@ ansible test -m shell -a 'sh /root/a.sh'
 ```sh
 #使用copy module 远程主机需依赖libselinux-python
 ansible test -m shell   -a 'yum install libselinux-python -y'
-ansible test -m copy    -a 'source  des'
+ansible test -m copy    -a 'src=/etc/rancher/k3s/registries.yaml dest=/etc/rancher/k3s/registries.yaml'
 ```
 
 shell yum 
@@ -107,8 +109,8 @@ shell yum
 
 playbook是一个yml文件，由play和task两部分组成。
 
-play:主要定义要操作主机或者主机组
-task:主要定义对主机或主机组具体执行的任务，可以是一个任务，也可以是多个任务（模块)
+play:定义要操作的 主机 或者 主机组
+task:定义 对 主机或主机组 具体执行的任务，可以是一个任务，也可以是多个任务（模块)
 
 playbook由一个或多个模块组成的，使用多个不同的模块，共同完成一件事情。
 
