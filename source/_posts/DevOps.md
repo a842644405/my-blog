@@ -6,18 +6,27 @@ title: DevOps
 
 ### 一、DevOps介绍
 
-整体软件开发流程：
+软件开发流程：
 
 - PLAN：开发团队 根据客户的目标 制定开发计划
-- CODE：根据PLAN开始编码过程，需要将不同版本的代码存储在一个库中。
-- BUILD：编码完成后，需要将代码构建并且运行。
-- TEST：成功构建项目后，需要测试代码是否存在BUG或错误。
-- DEPLOY：代码经过手动测试和自动化测试后，认定代码已经准备好部署 并且交给运维团队。
-- OPERATE：运维团队将代码 部署到 生产环境中。
-- MONITOR：项目部署上线后，需要持续的监控产品。
-- INTEGRATE：然后将监控阶段收到的反馈发送回PLAN阶段，**整体反复的流程就是DevOps核心，即持续集成、持续部署**。
 
-各阶段常见的工具：
+- CODE：根据PLAN开始编码，需将不同版本的代码 存储在 一个库 中。
+
+- BUILD：编码完成后，将代码构建并且运行。
+
+- TEST：成功构建项目后，需要测试代码是否存在BUG或错误。
+
+- DEPLOY：代码经过手动测试和自动化测试后，认定代码已经准备好部署 并且交给 运维团队。
+
+- OPERATE：运维团队将代码 部署到 生产环境中。
+
+- MONITOR：项目部署上线后，需要持续的监控产品。
+
+- INTEGRATE：然后将监控阶段收到的反馈发送回PLAN阶段。
+
+  **整体反复的流程就是DevOps核心，即持续集成、持续部署**。
+
+各阶段常见工具：
 
 |               软件开发过程&涉及工具                |
 | :------------------------------------------------: |
@@ -29,11 +38,13 @@ DevOps 通过 自动化工具 协作和沟通 来完成 软件的生命周期管
 
 ### 二、Code阶段工具
 
-code阶段将 不同版本的代码 存储到一个仓库中，常见的**版本控制工具**就是SVN或者**Git**，本次采用**Git作为版本控制工具，GitLab作为远程仓库**。
+code阶段 将 不同版本的代码 存储到一个仓库中，常见的**版本控制工具**就是**SVN**或者**Git**，本次采用**Git 作为版本控制工具，GitLab作为远程仓库**。
 
 #### 2.1 Git安装
 
 https://git-scm.com/（傻瓜式安装）
+
+详见git.md
 
 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
 
@@ -131,6 +142,8 @@ git remote set-url origin https://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@githu
 
 ### 三、Build阶段工具
 
+使用服务器 192.168.101.103
+
 构建Java项目的工具有两种 Maven 和 Gradle
 
 本次使用maven
@@ -144,8 +157,6 @@ tar -zxvf apache-maven-3.5.4-bin.tar.gz -C /usr/local
 
 #配置maven
 vim /usr/local/apache-maven-3.5.4/conf/setting.xml
-
-<localRepository>E:\repository</localRepository>
 <mirror>
   <id>aliyunmaven</id>
   <mirrorOf>*</mirrorOf>
@@ -153,18 +164,30 @@ vim /usr/local/apache-maven-3.5.4/conf/setting.xml
   <url>https://maven.aliyun.com/repository/public</url>
 </mirror>
 
-<profile>    
-	<id>jdk-1.8</id>    
-	<activation>    
-		<activeByDefault>true</activeByDefault>    
-		<jdk>1.8</jdk>    
-	</activation>    
-	<properties>    
-		<maven.compiler.source>1.8</maven.compiler.source>    
-		<maven.compiler.target>1.8</maven.compiler.target>    
-		<maven.com iler.compilerVersion>1.8</maven.compiler.compilerVersion>    
-	</properties>    
+<profile>
+        <id>jdk-1.8</id>
+        <activation>
+                <activeByDefault>true</activeByDefault>
+                <jdk>1.8</jdk>
+        </activation>
+        <properties>
+                <maven.compiler.source>1.8</maven.compiler.source>
+                <maven.compiler.target>1.8</maven.compiler.target>
+                <maven.compiler.compilerVersion>1.8</maven.compiler.compilerVersion>
+        </properties>
 </profile>
+<profile>
+            <id>sonar</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <sonar.login>admin</sonar.login>
+                <sonar.password>root</sonar.password>
+                <sonar.host.url>http://192.168.101.103:9000</sonar.host.url>
+            </properties>
+</profile>
+
 ```
 
 需要确保配置好Maven仓库私服以及JDK编译版本。
@@ -241,9 +264,9 @@ vim /usr/local/apache-maven-3.5.4/conf/setting.xml
 
 ### 五、Integrate工具
 
-Jenkins是一个开源的持续集成平台。CI
+Jenkins是一个开源的持续集成平台。Continuous integration
 
-Jenkins涉及到将  开发环境 编写的代码  发布到  测试环境和生产环境 的任务，还涉及到 构建项目等任务。
+Jenkins 涉及将  开发环境 编写的代码  发布到  测试环境 和 生产环境 的任务，还涉及到 构建项目 等任务。
 
 Jenkins需大量的插件保证工作，安装成本较高，下面基于Docker搭建Jenkins。
 
@@ -325,17 +348,16 @@ CI/CD可以理解为：
   
   
   
-- 编写docker-compose.yml（本次未使用docke compose启动容器）
+- 编写docker-compose.yml
 
   ```
   cd /usr/local/docker
-  mkdir /usr/local/docker/jenkins_docker
-  mkdir /usr/local/docker/jenkins_docker/data
-  chmod -R 777 ./jenkins_docker/data/
-  ```
-
+  mkdir /usr/local/docker/jenkins18080
+  mv /usr/bin/local/jdk /usr/local/docker/jenkins18080
+  mv /usr/bin/local/maven /usr/local/docker/maven
   
-
+  ```
+  
 - ```yml
   version: "3.1"
   services:
@@ -348,10 +370,8 @@ CI/CD可以理解为：
         - 50000:50000
       volumes:
         - /usr/local/docker/jenkins18080:/var/jenkins_home #/var/jenkins_home/ 插件 项目在这
-        - /usr/bin/docker:/usr/bin/docker
         - /var/run/docker.sock:/var/run/docker.sock
         - /etc/docker/daemon.json:/etc/docker/daemon.json
-        
   ```
   
 - 首次启动会因为数据卷data目录没有权限导致启动失败，设置data目录写权限
@@ -361,9 +381,9 @@ CI/CD可以理解为：
   | ![image-20211124202610243](DevOps/image-20211124202610243.png) |
 
   ```sh
-  chmod -R a+w data/ 
+  chmod -R a+w /usr/local/docker/jenkins18080
   or
-  chmod -R 777 data/
+  chmod -R 777 /usr/local/docker/jenkins18080
   ```
 
 - 重新启动Jenkins容器后，由于Jenkins需要下载大量内容，但是由于默认下载地址下载速度较慢，需要重新设置下载地址为国内镜像站
@@ -406,15 +426,12 @@ CI/CD可以理解为：
   docker exec -it jenkins cat /var/jenkins_home/secrets/initialAdminPassword
   ```
 
-  新建用户密码
-
-  root 
-
-  root
+  
 
   |                        登录并下载插件                        |
   | :----------------------------------------------------------: |
-  | ![image-20211124205050484](DevOps/image-20211124205050484.png) |
+  |           ![](DevOps/image-20211124205050484.png)            |
+  |                    新建用户root 密码root                     |
   | ![image-20211124205513465](DevOps/image-20211124205513465.png) |
 
   - 选择需要安装的插件 Publish Over SSH	Git Parameters
@@ -440,15 +457,13 @@ CI/CD可以理解为：
 
 ##### 5.3.1 构建任务
 
-**准备好GitLab仓库中的项目**，并通过Jenkins配置项目的实现当前项目的DevOps基本流程。
+**准备好GitLab仓库中的项目**
 
-- 构建Maven工程发布到GitLab（Gitee、Github均可）
-
-  |                        GitLab查看项目                        |
+- |                        GitLab查看项目                        |
   | :----------------------------------------------------------: |
   | ![image-20211125195818670](DevOps/image-20211125195818670.png) |
-
-- Jenkins点击左侧导航新建任务
+  
+- Jenkins点击左侧导航新建**任务**
 
   |                           新建任务                           |
   | :----------------------------------------------------------: |
@@ -494,7 +509,7 @@ Jenkins需要将Gitlab上存放的源码 存储到Jenkins服务所在磁盘的�
 
 **拉代码**到Jenkins本地后，对代码进行**构建**，需要Maven的环境，Maven需要Java的环境，需在Jenkins中安装JDK和Maven，并且配置到 Jenkins服务。
 
-- 准备JDK、Maven压缩包 通过 数据卷映射到Jenkins容器内部（之前已做过）
+- 移动JDK、Maven目录至jenkins18080，或通过 数据卷映射到Jenkins容器内部。
 
   ![image-20230630145124371](DevOps/image-20230630145124371.png)
   
