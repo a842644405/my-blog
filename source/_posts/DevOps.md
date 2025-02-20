@@ -54,6 +54,8 @@ git remote set-url origin https://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@githu
 
 单独准备服务器192.168.101.102，采用Docker安装
 
+https://hub.docker.com/r/gitlab/gitlab-ce
+
 - 查看GitLab镜像
 
   ```sh
@@ -151,6 +153,8 @@ git remote set-url origin https://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@githu
 下载maven和jdk8并解压
 
 ```shell
+https://www.oracle.com/java/technologies/downloads/#java8
+wget https://dlcdn.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
 #解压
 tar -zxvf jdk-8u171-linux-x64.tar.gz -C /usr/local
 tar -zxvf apache-maven-3.5.4-bin.tar.gz -C /usr/local 
@@ -268,7 +272,7 @@ Jenkins是一个开源的持续集成平台。Continuous integration
 
 Jenkins 涉及将  开发环境 编写的代码  发布到  测试环境 和 生产环境 的任务，还涉及到 构建项目 等任务。
 
-Jenkins需大量的插件保证工作，安装成本较高，下面基于Docker搭建Jenkins。
+Jenkins需大量的 插件 保证工作，安装成本较高，下面基于Docker搭建Jenkins。
 
 #### 5.1 Jenkins介绍
 
@@ -282,7 +286,7 @@ Jenkins最强大的就在于**插件**，官方提供了大量的插件库，来
 | :----------------------------------------------------------: | :----------------------------------------------------------: |
 | ![image-20211125141950900](DevOps/image-20211125141950900.png) | ![image-20211124200317795](DevOps/image-20211125141701495.png) |
 
-**Jenkins最主要的工作就是 将 GitLab上 可以构建的工程代码 拉取并且进行构建，再根据 流程 可以选择发布到测试环境或是生产环境。**
+**Jenkins最主要的工作就是 将 GitLab上 可以构建的工程代码 拉取并且进行构建，再根据 流程 可以选择发布到 测试环境 或是 生产环境。**
 
 一般GitLab上的代码经过大量的测试后，确定发行版本，再发布到生产环境。
 
@@ -354,7 +358,7 @@ CI/CD可以理解为：
   cd /usr/local/docker
   mkdir /usr/local/docker/jenkins18080
   mv /usr/bin/local/jdk /usr/local/docker/jenkins18080
-  mv /usr/bin/local/maven /usr/local/docker/maven
+  mv /usr/bin/local/maven /usr/local/docker/jenkins18080
   
   ```
   
@@ -370,7 +374,7 @@ CI/CD可以理解为：
         - 50000:50000
       volumes:
         - /usr/local/docker/jenkins18080:/var/jenkins_home #/var/jenkins_home/ 插件 项目在这
-        - /var/run/docker.sock:/var/run/docker.sock
+        - /var/run/docker.sock:/var/run/docker.sock #为了在jenkins中使用本地的docker
         - /etc/docker/daemon.json:/etc/docker/daemon.json
   ```
   
@@ -391,14 +395,6 @@ CI/CD可以理解为：
   ```sh
   # 修改数据卷中的hudson.model.UpdateCenter.xml文件
   vim hudson.model.UpdateCenter.xml
-  <?xml version='1.1' encoding='UTF-8'?>
-  <sites>
-    <site>
-      <id>default</id>
-      <url>https://updates.jenkins.io/update-center.json</url>
-    </site>
-  </sites>
-  
   # 将下载地址替换为http://mirror.esuni.jp/jenkins/updates/update-center.json
   <?xml version='1.1' encoding='UTF-8'?>
   <sites>
@@ -412,7 +408,7 @@ CI/CD可以理解为：
   sed 's/被替换/替换/g'
   
   ```
-
+  
 - 再次重启Jenkins容器，访问Jenkins（需要稍微等会）
 
   |                         Jenkins首页                          |

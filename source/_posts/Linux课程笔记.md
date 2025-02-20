@@ -2,12 +2,6 @@
 title: Linux
 ---
 
-
-
-
-
-
-
 # vmware workstation  uninstall/install
 
 vmware workstation pro彻底拆卸
@@ -193,19 +187,24 @@ Ctrl + w \Ctrl + k:删除光标之前\之后的内容
 
 
 
-VIM操作
+## VIM操作
 
 ```sh
 ZZ or :wq 文件保存并退出 
 / 查找
-dd 删除一行
+dd 删除一行 
+n dd 删除n行
 yy 复制当前行
+n yy
+
 p 粘贴
 :%s/aaa/bbb/gc 全局替换aaa为bbb 
-# 跳到最后一行下一行
-G
-o
 
+gg 跳到第一行
+n gg 跳到第n行
+G # 跳到最后一行
+o 在当前行下方插入一行并进入插入模式
+i 在当前光标位置插入
 #替换192为198
 %s/192/198/g
 % 在整个文件范围内执行替换操作
@@ -618,21 +617,80 @@ locate通过数据库（/var/lib/mlocate/mlocate.db文件）来查找文件（�
 
 
 
-## | 管道符
+## |  管道符
 
 功能：将符号左边的结果，作为符号右边的输入
 
-示例：
-
-`cat a.txt | grep itheima` 
-
+```
+cat a.txt | grep itheima
 将cat a.txt的结果，作为grep命令的输入，用来过滤`itheima`关键字
 
+cat a.txt | grep itheima | grep itcast
+输出那些同时包含 itheima 和 itcast 的行
+```
+
+## || 逻辑或
+
+**条件执行**：
+
+- 1失败，2执行。
+
+- 1成功，2不执行
+
+  
+
+  ```sh
+  ech 11 || ll
+  -bash: ech: 未找到命令
+  总用量 16
+  -rw-------. 1 root root 1240 5月  26 01:26 anaconda-ks.cfg
+  -rwxr-xr-x. 1 root root  851 5月  25 18:01 init.sh
+  -rwxr-xr-x. 1 root root  505 5月  25 18:08 monitor.sh
+  -rwxr-xr-x  1 root root  115 9月  29 14:26 sync_time.sh
+  
+  echo 22 || ll
+  22
+  
+  ```
+
+## && 
+
+- 如果第一个命令成功，则执行第二个命令。
+- 如果第一个命令失败，则不执行第二个命令
+
+```
+ll init.sh && echo hh
+-rwxr-xr-x. 1 root root 851 5月  25 18:01 init.sh
+hh
+
+cat aa && ll
+cat: aa: 没有那个文件或目录
+```
 
 
-支持嵌套：
 
-`cat a.txt | grep itheima | grep itcast`
+## & 后台运行
+
+```
+top &
+[1] 1537
+[root@mini ~]# ps -ef |grep top
+root       1537   1452  0 18:54 pts/0    00:00:00 top
+root       1539   1452  0 18:54 pts/0    00:00:00 grep --color=auto top
+
+```
+
+## ``  反引号内的指令先执行
+
+```
+touch test_`date +%F+%T`.txt
+
+ll
+总用量 16
+-rwxr-xr-x. 1 root root  851 5月  25 18:01 init.sh
+-rw-r--r--  1 root root    0 10月  8 19:02 test_2024-10-08+19:02:21.txt
+
+```
 
 
 
@@ -902,7 +960,7 @@ sudo ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
 
 
-## ntp
+## ntp chrony
 
 Network Time Protocol
 
@@ -1574,9 +1632,9 @@ groupdel 用户组名
 ## 用户管理
 
 ```sh
-以下命令需root用户执行
-
-创建用户
+需root用户执行
+cat /etc/passwd
+#创建用户
 useradd [-g -d] 用户名
 -g 指定 用户的组，不指定-g，会创建同名组并自动加入，指定-g需要组已经存在，如已存在同名组，必须使用-g
 -d 指定 用户HOME路径，
@@ -1589,13 +1647,20 @@ userdel [-r] 用户名
 -r 删除用户的HOME目录，
 不使用-r，删除用户时，HOME目录保留
 
-查看用户所属组
+#查看用户所属组
 id [用户名]
 参数：用户名，被查看的用户，如果不提供则查看自身
 
-修改用户所属组
+#修改用户所属组
 usermod -aG 用户组 用户名，将指定用户加入指定用户组
-modify
+usermod -aG root vijay
+
+id test
+uid=1001(test) gid=1001(test) 组=1001(test)
+[root@mini ~]# usermod -aG root test
+[root@mini ~]# id test
+uid=1001(test) gid=1001(test) 组=1001(test),0(root)
+
 
 ```
 

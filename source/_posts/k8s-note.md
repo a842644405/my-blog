@@ -3,18 +3,21 @@ title: k8s-note
 date: 2024-05-23 15:29:16
 ---
 
-k8s
+# k8s 
 
 [Kubernetes](https://v1-27.docs.kubernetes.io/docs/concepts/overview/), also known as K8s, is an open-source system for **automating deployment, scaling, and management of containerized application**
 
 It groups containers that make up an application into logical units for easy management and discovery. Kubernetes builds upon [15 years of experience of running production workloads at Google](http://queue.acm.org/detail.cfm?id=2898444), combined with best-of-breed ideas and practices from the community
 
-
+https://kubernetes.io/
 
 ## 部署方式
 
 1. 传统的**服务进程**    手工繁琐，需使用自动化工具 ansible/saltstack/shell
+
 2. 容器应用管理     应用功能状态最大化封装
+
+   
 
 ![image-20240412193454226](k8s-note/image-20240412193454226.png?lastModify=1716449400)
 
@@ -43,49 +46,95 @@ pod创建方式及流程
 **yaml**   kubectl apply -f my-pod.yaml
 
 ```yaml
-    #my-pod.yaml
-     apiVersion: v1
-     kind: Pod
-     metadata:
-       name: my-pod
-     spec:
-       containers:
-       - name: nginx-container
-         image: nginx
-     
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  containers:
+    - name: nginx-container
+      image: nginx:1.21
 ```
 
-**Kubernetes Pod创建流程图**
+**Pod创建流程**
 
-1. 用户提交Pod配置文件（YAML）
-   - 使用`kubectl create`或`kubectl apply`命令
+1 Kubernetes API Server 接收请求
+	当你执行 kubectl apply 命令时，kubectl 会将 YAML 文件的内容转换为 JSON 格式，并通过 REST API 发送到 Kubernetes API Server。
+	API Server 验证请求的有效性（如权限检查、资源定义的合法性等）。
 
-2. API Server接收请求
-   - 验证请求并授权
-   - 将Pod配置信息存储到etcd数据库
+2 API Server 处理请求
+	API Server 将接收到的资源对象存储到 etcd 中（etcd 是 Kubernetes 的分布式键值存储系统，用于存储集群的所有状态数据）。
+	API Server 还会通知所有相关的控制器（Controller），告知有一个新的 Pod 被创建。
+3 调度器（Scheduler）选择节点
+	Kubernetes 调度器（Scheduler）负责将新创建的 Pod 分配到合适的节点上。
+	调度器会考虑多种因素，包括节点的资源可用性（CPU、内存等）、亲和性和反亲和性规则、污点和容忍等。
+4 Kubelet 拉取镜像并启动容器
+	当调度器决定将 Pod 分配给某个节点后，该节点上的 Kubelet 组件会收到通知。
+	Kubelet 负责在该节点上实际运行容器：
+		Kubelet 会从指定的镜像仓库（例如 Docker Hub）拉取 nginx:1.21 镜像。
+		拉取完成后，Kubelet 使用容器运行时（如 containerd 或 Docker）启动容器。
+5 健康检查和状态更新
+	容器启动后，Kubelet 会定期进行健康检查（如果配置了 Liveness 和 Readiness Probes）。
+	如果一切正常，Pod 的状态会被更新为 Running，并且可以通过 kubectl get pods 查看到。
+6 访问 Pod
+	如果需要访问这个 Pod，可以通过端口转发或服务（Service）的方式进行访问：
+	使用 kubectl port-forward 命令进行本地端口转发：
+		kubectl port-forward pod/my-pod 8080:80
+	或者创建一个 Service 来暴露 Pod。
 
-3. Scheduler调度Pod
-   - 根据资源需求和集群状态选择合适的节点
-   - 将Pod绑定到选定的节点
-
-4. Kubelet执行Pod创建
-   - 在目标节点上创建Pod目录
-   - 拉取Pod所需的镜像
-   - 启动容器并监控其状态
-
-5. 容器运行时（如Docker）启动容器
-   - 解析镜像并创建容器
-   - 启动容器进程
-
-6. Pod状态更新
-   - Kubelet定期向API Server报告Pod状态
-   - API Server更新etcd数据库中的Pod信息
-
-7. 用户查看Pod状态
-   - 使用`kubectl get pods`命令查看Pod列表
-   - 使用`kubectl describe pod <pod_name>`查看Pod详细信息
-
-
+```
++---------------------+
+| Prepare YAML File   |
++----------+----------+
+           |
+           v
++----------+----------+
+| Apply YAML with     |
+| kubectl apply -f    |
++----------+----------+
+           |
+           v
++----------+----------+
+| API Server Receives |
+| and Validates       |
++----------+----------+
+           |
+           v
++----------+----------+
+| Store in etcd       |
++----------+----------+
+           |
+           v
++----------+----------+
+| Notify Controllers  |
++----------+----------+
+           |
+           v
++----------+----------+
+| Scheduler Selects   |
+| Node                 |
++----------+----------+
+           |
+           v
++----------+----------+
+| Kubelet on Node     |
+| Pulls Image and     |
+| Starts Container    |
++----------+----------+
+           |
+           v
++----------+----------+
+| Health Checks and   |
+| Status Updates      |
++----------+----------+
+           |
+           v
++----------+----------+
+| Access Pod via Port |
+| Forwarding or       |
+| Service             |
++---------------------+
+```
 
 
 
@@ -387,8 +436,6 @@ systemctl enable harbor
 
 
 
-
-
 harbor仓库测试
 
 ```sh
@@ -524,14 +571,19 @@ sudo rm -rf /var/lib/etcd/*
 
 
 
-自动补全功能
+自动补全功能 别名
 
 ```sh
 yum -y install bash-completion
 source /usr/share/bash-completion/bash_completion
 echo 'source <(kubectl completion bash)' >>  ~/.bashrc
 echo "source <(kubeadm completion bash)" >> ~/.bashrc 
-source ~/.bashr
+echo "alias k='kubectl'" >> ~/.bashrc
+echo 'complete -F __start_kubectl k' >> ~/.bashrc
+source ~/.bashrc
+
+echo 'source <(docker completion zsh)' >> ~/.bashrc
+source ~/.bashrc
 ```
 
 
@@ -1275,7 +1327,7 @@ done
 
 # helm
 
-## the best way to find, share, and use software built for [Kubernetes](https://kubernetes.io/).
+the best way to find, share, and use software built for [Kubernetes](https://kubernetes.io/).
 
 ![image-20240523162326257](k8s-note/image-20240523162326257.png)
 
@@ -1341,3 +1393,229 @@ helm list
 kubectl get pod
 ```
 
+-------
+
+Helm 是 Kubernetes 的包管理工具，可以帮助你简化应用的部署和管理。
+
+### Helm 常用命令及示例
+
+1. 初始化 Helm 客户端
+  如果你使用的是 Helm 3 及以上版本，客户端初始化已经不再需要，因为 Helm 3 移除了 Tiller（服务器端组件）。
+
+  
+
+2. 添加 Chart 仓库
+  添加一个 Helm Chart 仓库以便下载和使用官方或第三方的 Charts。
+
+```
+helm repo add stable https://charts.helm.sh/stable
+helm repo add bitnami https://charts.bitnami.com/bitnami
+```
+
+
+3. 更新本地 Chart 仓库索引
+  更新本地存储的 Chart 仓库索引以获取最新的 Charts。
+
+  ```
+  helm repo update
+  ```
+
+  
+
+4. 搜索 Chart
+  搜索特定名称的 Chart。
+
+  ```
+  helm search repo redis
+  ```
+
+  这将列出所有包含 "redis" 关键字的 Charts。
+
+5. 查看 Chart 详细信息
+查看某个 Chart 的详细信息，包括可用版本和描述。
+
+```
+helm show chart bitnami/redis
+```
+
+
+
+6. 安装 Chart
+安装一个 Chart，并指定 Release 名称和其他配置参数。
+
+```
+helm install my-redis bitnami/redis --version 20.7.1
+my-redis 是 Release 名称。
+bitnami/redis 是 Chart 名称。
+--version 20.7.1 指定要安装的具体版本。
+```
+
+
+7. 列出已安装的 Releases
+  列出当前命名空间下的所有已安装的 Releases。
+
+  ```
+  helm list
+  helm list --all-namespaces
+  ```
+
+8. 升级 Release
+升级已安装的 Release 到新版本或修改配置。
+
+```
+helm upgrade my-redis bitnami/redis --version 20.8.0
+```
+
+
+9. 回滚 Release
+  回滚到之前的版本。
+
+  ```
+  helm history my-redis -n default
+  helm rollback my-redis 1
+  ```
+
+  这里的 1 是你想回滚到的历史版本号。
+
+10. 删除 Release
+    删除一个已安装的 Release。
+
+    ```
+    helm uninstall my-redis
+    ```
+
+    
+
+11. 查看 Release 状态
+查看某个 Release 的状态。
+
+```
+helm status my-redis
+```
+
+
+12. 查看 Release 历史记录
+    查看某个 Release 的历史记录，包括所有的版本和操作。
+
+    helm history my-redis
+
+13. 使用自定义值文件安装 Chart
+    你可以通过 -f 参数指定一个自定义的值文件来覆盖默认配置。
+
+    ```
+    helm install my-redis bitnami/redis -f ./my-values.yaml
+    ```
+
+    
+
+14. 获取 Chart 默认值文件
+    下载并查看某个 Chart 的默认值文件。
+
+    ```
+    helm show values bitnami/redis > default-values.yaml
+    ```
+
+    
+
+15. OCI 支持
+从 OCI 兼容的注册表中拉取和推送 Helm Chart。
+
+拉取 Chart：
+
+```
+helm pull oci://registry-1.docker.io/bitnamicharts/redis --version 20.7.1
+```
+
+推送 Chart： 首先登录到 OCI 注册表：
+
+```
+helm registry login registry-1.docker.io
+```
+
+然后推送你的 Chart：
+
+```
+helm push my-chart.tar.gz oci://registry-1.docker.io/my-repo
+```
+
+
+16. 创建新的 Chart
+    创建一个新的 Chart 模板。
+
+    ```
+     helm create my-chart
+    ```
+
+    这将在当前目录下生成一个名为 my-chart 的目录，其中包含基本的 Chart 文件结构。
+
+17. 打包 Chart
+    打包一个 Chart 以便分发。
+
+    ```
+    helm package my-chart
+    ```
+
+    这将生成一个 .tgz 文件，可以在其他环境中安装。
+
+18. 验证 Chart
+验证一个 Chart 是否符合 Helm 规范。
+
+```
+ helm lint my-chart
+```
+
+示例笔记汇总
+添加和更新仓库
+
+### 添加 Bitnami 仓库
+
+helm repo add bitnami https://charts.bitnami.com/bitnami
+
+### 更新本地仓库索引
+helm repo update
+
+搜索和查看 Chart
+
+### 搜索 Redis 相关的 Chart
+helm search repo redis
+
+### 查看 Redis Chart 的详细信息
+helm show chart bitnami/redis
+安装和管理 Release
+ 
+ 
+### 安装 Redis Chart
+helm install my-redis bitnami/redis --version 20.7.1
+
+### 列出所有已安装的 Releases
+helm list
+
+### 升级 Redis Release 到新版本
+helm upgrade my-redis bitnami/redis --version 20.8.0
+
+### 回滚到之前的一个版本
+helm rollback my-redis 1
+
+### 删除 Redis Release
+helm uninstall my-redis
+使用自定义值文件
+ 
+ 
+### 下载默认值文件
+helm show values bitnami/redis > default-values.yaml
+
+### 编辑 default-values.yaml 并保存为 my-values.yaml
+
+### 使用自定义值文件安装 Redis
+helm install my-redis bitnami/redis -f ./my-values.yaml
+创建和打包新的 Chart
+ 
+ 
+### 创建一个新的 Chart 模板
+helm create my-chart
+
+### 验证 Chart
+helm lint my-chart
+
+### 打包 Chart
+helm package my-chart
