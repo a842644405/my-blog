@@ -582,7 +582,8 @@ echo "alias k='kubectl'" >> ~/.bashrc
 echo 'complete -F __start_kubectl k' >> ~/.bashrc
 source ~/.bashrc
 
-echo 'source <(docker completion zsh)' >> ~/.bashrc
+echo 'source <(docker completion bash)' >> ~/.bashrc
+echo 'source <(helm completion bash)' >> ~/.bashrc
 source ~/.bashrc
 ```
 
@@ -693,11 +694,30 @@ curl nginx-service:8080
 
 ## Namespace(命名空间)
 
-命名空间(Namespace)是一种资源隔离机制，将同一集群中的资源划分为相互隔离的组。 命名空间可以在多个用户之间划分集群资源（通过[资源配额](https://kubernetes.io/zh-cn/docs/concepts/policy/resource-quotas/)）。 例如我们可以设置开发、测试、生产等多个命名空间。 同一ns内的资源名称要唯一，但跨ns时没有这个要求。  ns作用域仅针对带有名字空间的对象，例如 Deployment、Service 等。 这种作用域对集群访问的对象不适用，例如 StorageClass、Node、PersistentVolume 等。
+**命名空间是什么？**
 
+ • 一句话解释：命名空间是 Kubernetes 中的 “虚拟文件夹”，用来隔离不同环境、团队或项目的资源。
 
+命名空间(Namespace)是一种资源隔离机制，将同一集群中的资源划分为相互隔离的组。  例如我们可以设置开发、测试、生产等多个命名空间。 同一ns内的资源名称要唯一，但跨ns时没有这个要求。  ns作用域仅针对带有名字空间的对象，例如 Deployment、Service 等。 这种作用域对集群访问的对象不适用，例如 StorageClass、Node、PersistentVolume 等。
 
-Kubernetes 会创建四个初始ns：
+**命名空间的作用**
+
+- **资源隔离**：
+
+  - 不同团队 / 项目用不同命名空间，避免资源名称冲突。
+  - 例如：`dev` 环境放测试资源，`prod` 环境放生产资源。
+
+- **权限控制**：
+
+  - 给团队分配不同命名空间的访问权限（比如开发只能操作 `dev`）。
+
+- **资源配额**：
+
+  - 限制每个命名空间的资源总量（如 CPU、内存）。
+
+    
+
+Kubernetes 默认创建的四个ns：
 
  default		    默认的命名空间，不可删除，未指定命名空间的对象都会被分配到default中。 
 
@@ -709,7 +729,7 @@ kube-system Kubernetes 系统对象(控制平面和Node组件)所使用的命名
 
 
 
-管理ns
+ns相关操作
 
 ```
 #创建命名空间
@@ -725,7 +745,8 @@ kubectl run my-nginx --image=nginx:1.21 -n=dev
 kubectl get pods -n=dev
 
 #查看命名空间内所有对象
-kubectl get all
+kubectl get all -n dev
+
 # 删除命名空间会删除命名空间下的所有内容
 kubectl delete ns dev
 
@@ -733,18 +754,49 @@ kubectl delete ns dev
 kubectl config current-context
 
 #将dev设为当前命名空间，后续所有操作都在此命名空间下执行。
-kubectl config set-context $(kubectl config current-context) --namespace=dev
+kubectl config set-context --current --namespace=dev
+
 ```
 
+ **常见使用场景**
+
+- **多团队协作**：
+  团队 A 用 `namespace-a`，团队 B 用 `namespace-b`，互不干扰。
+- **环境隔离**：
+  - `dev`：开发环境
+  - `test`：测试环境
+  - `prod`：生产环境
+- **资源配额管理**：
+  限制 `dev` 命名空间最多使用 10 核 CPU、20G 内存。
 
 
-声明式对象配置
+
+------
+
+
+
+**注意事项**
+
+- **不是完全隔离**：
+  不同命名空间的 Pod 默认可以互相通信（需网络策略限制）。
+- **资源名称唯一性**：
+  同一命名空间内不能有同名资源，不同命名空间可以。
+- **慎删默认命名空间**：
+  不要随意删除 `kube-system` 和 `default`！
+- **资源配额非必须**：
+  不设置配额时，命名空间内的资源可以无限申请（需谨慎）。
+
+
+
+
+
+## 声明式对象配置
 
 云原生的代表技术包括： 容器 服务网格 微服务 不可变基础设施 声明式API
 
 
 
-**管理对象**
+**对象管理**
 
 **命令行指令**
 
@@ -754,7 +806,7 @@ kubectl config set-context $(kubectl config current-context) --namespace=dev
 
 但功能有限，不适合复杂场景，操作不容易追溯，多用于开发和调试。
 
-**声明对象配置yaml**
+**声明式对象配置yaml**
 
 使用yaml文件来描述 Kubernetes 对象。
 
@@ -791,7 +843,7 @@ kubectl config set-context $(kubectl config current-context) --namespace=dev
 
 ## [Pod配置模版](https://kubernetes.io/zh-cn/docs/concepts/workloads/pods/#using-pods)
 
-```
+```yml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -811,6 +863,87 @@ kubectl edit nginx
 kubectl delete -f pod.yaml
 ```
 
+## Deployment配置模版
+
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: web
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+```
+
+在这个示例中，Deployment 创建了 3 个副本的 Nginx 容器，每个 Pod 是独立且可互换的，没有固定的标识符。
+
+
+
+## StatefulSet配置模版
+
+```yml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-sts
+spec:
+  selector:
+    matchLabels:
+      app: mysql # 必须匹配 .spec.template.metadata.labels
+  serviceName: db
+  replicas: 3 # 默认值是 1
+  minReadySeconds: 10 # 默认值是 0
+  template:
+    metadata:
+      labels:
+        app: mysql # 必须匹配 .spec.selector.matchLabels
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: mysql
+          image: mysql:5.7
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "root"
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - mountPath: /var/lib/mysql #容器中的目录
+              name: mysql-pvc
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-pvc
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 2Gi
+```
+
+在这个示例中，`StatefulSet` 创建了 3 个 MySQL 实例，每个实例都有自己的持久卷，并且 Pod 名称分别为 `db-statefulset-0`, `db-statefulset-1`, `db-statefulset-2`。
+
+特性			Deployment				StatefulSet
+适用场景	无状态应用	 			 有状态应用
+Pod 标识	动态分配，			无固定标识	固定标识（如 pod-name-0）
+存储管理	动态分配，无持久化存储	稳定的持久化存储
+更新策略	并行滚动更新	顺序滚动更新
+网络标识	无稳定网络标识	稳定的网络标识
+扩展和缩减	灵活扩展和缩减	有序扩展和缩减
+
 
 
 **标签（Labels）** 是附加到对象（比如 Pod）上的键值对，用于补充对象的描述信息。
@@ -821,7 +954,7 @@ kubectl delete -f pod.yaml
 
 ## [label配置模版](https://kubernetes.io/zh-cn/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set)
 
-```
+```yml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -839,19 +972,279 @@ kubectl get pod --show-labels
 kubectl get pod -l environment=dev,app=nginx
 ```
 
-
-
  
 
-## 选择器
+### 选择器
 
-标签选择器 可以识别一组对象。标签不支持唯一性。
+标签选择器 可以识别 一组对象。标签不支持唯一性。
 
 标签选择器最常见的用法是 为Service选择一组Pod作为后端。
 
-## [Service配置模版](https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/#type-nodeport)
+目前支持两种类型的选择运算：基于等值的和基于集合的。 
+
+多个选择条件使用逗号分隔，相当于And(&&)运算。
+
+**●**等值选择
+
+```yml
+selector:
+  matchLabels: # component=redis && version=7.0
+    component: redis
+    version: 7.0
+```
+
+**●**集合选择
 
 ```
+selector:
+  matchExpressions: # tier in (cache, backend) && environment not in (dev, prod)
+    - {key: tier, operator: In, values: [cache, backend]}
+    - {key: environment, operator: NotIn, values: [dev, prod]}
+```
+
+
+
+
+
+## [Service配置模版](https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/#type-nodeport)
+
+### **使用模式对比**
+
+| Kind     | ClusterIP | NodePort       | LoadBalancer | ExternalName |
+| -------- | --------- | -------------- | ------------ | ------------ |
+| 网络位置 | 集群内部  | 节点 IP + 端口 | 公网 / IP    | 外部 DNS     |
+| 负载均衡 | 自动      | 节点级别       | 云厂商 LB    | 无           |
+| 适用环境 | 所有环境  | 无 LB 的裸机   | 公有云环境   | 混合云       |
+| 典型成本 | 免费      | 免费           | 按小时计费   | 免费         |
+| 服务发现 | DNS 轮询  | 手动维护       | 自动管理     | CNAME 解析   |
+
+------
+
+
+
+#### **1. ClusterIP (默认类型)**
+
+**核心特性**：
+
+- 分配集群内部虚拟 IP（VIP）
+- 仅限集群内部访问
+- 自动负载均衡到后端 Pod
+
+**适用场景**：
+
+- 微服务间内部通信（如前端调用后端 API）
+- 数据库服务仅对集群内暴露
+- 监控组件内部数据采集（如 Prometheus 抓取指标）
+
+**配置示例**：
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: backend
+```
+
+
+
+------
+
+
+
+#### **2. NodePort**
+
+**核心特性**：
+
+- 在**每个节点**的指定端口开放服务
+- 端口范围默认：30000-32767
+- 外部可通过 `<NodeIP>:<NodePort>` 访问
+
+**适用场景**
+
+- 开发测试环境临时暴露服务
+- 没有云厂商 LoadBalancer 时对外暴露服务
+- 混合云环境中跨集群访问
+
+**配置示例**：
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-nodeport
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 31000  # 手动指定端口
+  selector:
+    app: frontend
+```
+
+------
+
+
+
+#### **3. LoadBalancer**
+
+**核心特性**：
+
+- 自动创建云厂商的负载均衡器（如 AWS ALB、GCP LB）
+- 分配公网 / 内网 IP
+- 集成云平台健康检查机制
+
+**适用场景**：
+
+- 生产环境对外暴露 Web 服务
+- 需要高可用负载均衡的场景
+- 多可用区流量分发
+
+**配置示例（AWS 注解）**
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: prod-lb
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 443
+    targetPort: 8443
+  selector:
+    app: production
+```
+
+------
+
+
+
+#### **4. ExternalName**
+
+**核心特性**：
+
+- 映射到外部 DNS 名称
+- 不创建代理或端口映射
+- 相当于 DNS CNAME 记录
+
+**适用场景**：
+
+- 集群内访问外部服务（如云数据库）
+- 统一外部服务访问入口
+- 服务迁移过渡期
+
+**配置示例**：
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-db
+spec:
+  type: ExternalName
+  externalName: mydb.example.com
+```
+
+------
+
+
+
+#### **5. Headless Service**
+
+**核心特性**：
+
+- 设置 `clusterIP: None`
+- 直接返回 Pod IP 列表
+- 每个 Pod 有独立 DNS 记录
+
+**适用场景**：
+
+- 有状态服务（如 MongoDB/Redis 集群）
+- 需要直接访问 Pod 的场景
+- 服务发现机制需要获取所有 Pod IP
+
+**配置示例**：
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-headless
+spec:
+  clusterIP: None
+  ports:
+  - port: 6379
+  selector:
+    app: redis
+```
+
+
+
+### **场景选择决策树**
+
+```plaintext
+是否需要外部访问？
+├─ 否 → ClusterIP
+└─ 是 → 选择暴露方式？
+           ├─ 临时测试 → NodePort
+           ├─ 生产环境 → LoadBalancer
+           ├─ 访问外部服务 → ExternalName
+           └─ 有状态服务 → Headless Service
+```
+
+### **最佳实践建议**
+
+1. **内部通信**：
+
+   - 优先使用 ClusterIP + DNS 服务发现
+   - 通过 `myservice.namespace.svc.cluster.local` 访问
+
+2. **生产环境暴露**：
+
+   - 使用 LoadBalancer + Ingress Controller（如 Nginx）
+
+   - 示例组合：
+
+     ```yaml
+     apiVersion: networking.k8s.io/v1
+     kind: Ingress
+     metadata:
+       name: web-ingress
+     spec:
+       rules:
+       - host: example.com
+         http:
+           paths:
+           - path: /
+             pathType: Prefix
+             backend:
+               service:
+                 name: web-service
+                 port:
+                   number: 80
+     ```
+
+3. **混合云场景**：
+
+   - 使用 ExternalName 统一外部服务入口
+   - 结合 Service Mesh（如 Istio）实现高级流量管理
+
+4. **性能敏感场景**：
+
+   - Headless Service + StatefulSet 保证 Pod 稳定网络标识
+   - 示例：Zookeeper 集群节点通信
+
+```yml
 apiVersion: v1
 kind: Service
 metadata:
@@ -870,45 +1263,186 @@ spec:
       nodePort: 30007
 ```
 
-目前支持两种类型的选择运算：基于等值的和基于集合的。 
 
-多个选择条件使用逗号分隔，相当于And(&&)运算。
 
-**●**等值选择
+
+
+## 存储卷(Volume)
+
+将 数据存储 在容器中，一旦容器被删除，数据也会被删除。
+
+卷 独立于 容器之外 的 一块存储区域，通过挂载(Mount)的方式 供Pod中的容器使用。 使用场景
+
+- 在多个容器之间共享数据。
+- 将容器数据存储在 外部存储 或 云存储 上。
+- 容易备份或迁移。
+
+
+
+#### 常见的卷类型
+
+- **临时卷(Ephemeral Volume)：**与 Pod 一起创建和删除，生命周期与 Pod 相同
+- - emptyDir](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#emptydir)  - 作为缓存或存储日志
+  - [configMap](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#configmap) 、[secret](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#secret)、 [downwardAPI](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#downwardapi) - 给Pod注入数据
+- **持久卷(Persistent Volume)：**删除Pod后，持久卷不会被删除
+- - 本地存储 - [hostPath](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#hostpath)、 [local](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#local)
+- - 网络存储 - [NFS](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#nfs)
+  - 分布式存储 - Ceph([cephfs](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#cephfs)文件存储、[rbd](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#rbd)块存储)
+- **投射卷(Projected Volumes)：**[projected](https://kubernetes.io/zh-cn/docs/concepts/storage/projected-volumes/) 卷可以将多个卷映射到同一个目录上
+
+
+
+#### 后端存储
+
+一个集群中 可包含多种存储(如`local`、`NFS`、`Ceph`或云存储)。
+
+每种存储都对应一个**存储类（StorageClass）** ，存储类 用来 创建和管理持久卷，是集群与存储服务之间的桥梁。
+
+管理员创建持久卷(**PV**)时，通过设置不同的**StorageClass**来创建不同类型的持久卷。
+
+![image.png](https://cdn.nlark.com/yuque/0/2022/png/28915315/1666320617840-eeb42675-6e6d-4306-910a-080017b7975b.png?x-oss-process=image%2Fformat%2Cwebp%2Fresize%2Cw_1406%2Climit_0)
+
+参考文档：
+
+https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/
+
+https://kubernetes.io/zh-cn/docs/concepts/storage/ephemeral-volumes/
+
+https://kubernetes.io/zh-cn/docs/tasks/configure-pod-container/configure-volume-storage/
+
+
 
 ```
-selector:
-  matchLabels: # component=redis && version=7.0
-    component: redis
-    version: 7.0
+[root@k8s-worker2 conf-volume]# ll
+总用量 0
+lrwxrwxrwx 1 root root 16 2月   7 19:58 mysql.cnf -> ..data/mysql.cnf
+[root@k8s-worker2 conf-volume]# pwd
+/var/lib/kubelet/pods/539cd2e5-e4cf-4019-b518-feed135182d1/volumes/kubernetes.io~configmap/conf-volume
+删除pod时539cd2e5目录会删除
 ```
 
-**●**集合选择
 
+
+Ephemeral Volume
+
+与 Pod 一起创建和删除，生命周期与 Pod 相同
+
+[emptyDir](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#emptydir) - 初始内容为空的本地临时目录
+
+[configMap](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#configmap) - 为Pod注入配置文件
+
+[secret](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#secret) - 为Pod注入加密数据
+
+
+
+## 持久卷(PV-Persistent Volume)与持久卷声明(PVC-Persistent Volume Claim)
+
+删除Pod后，PV不会被删除
+
+本地存储
+
+​	[hostPath](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#hostpath) - 节点主机上的目录或文件(仅供单节点测试使用；多节点集群请用 local 卷代替)
+
+​	[local](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#local) - 节点上挂载的本地存储设备(不支持动态创建卷)
+
+网络存储
+
+​	[NFS](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#nfs) - 网络文件系统 (NFS) 
+
+分布式存储	
+
+​	Ceph([cephfs](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#cephfs)文件存储、[rbd](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#rbd)块存储)
+
+
+
+PV PVC
+
+PV是 集群中的一块存储。可以理解为一块虚拟硬盘。
+
+PV由管理员事先创建， 或 使用[存储类（Storage Class）](https://kubernetes.io/zh-cn/docs/concepts/storage/storage-classes/)根据用户请求来动态创建。 
+
+PV 属于集群的公共资源，并不属于某个namespace; 
+
+
+
+PVC 表达的是 用户对存储的请求。
+
+PVC 类似 申请单，它更贴近云服务的使用场景，使用资源先申请，便于统计和计费。
+
+Pod 将 PVC 当做Volume来使用，PVC 可以请求指定容量的存储空间和[访问模式](https://kubernetes.io/zh-cn/docs/concepts/storage/persistent-volumes/#access-modes) 。PVC对象是带有namespace的。
+
+
+
+![image-20240513163338077](k8s-note/image-20240513163338077.png?lastModify=1716449400)
+
+
+
+创建PV 
+
+创建PV是服务端的行为，通常 集群管理员提前创建一些常用规格的PV以备使用。
+
+hostPath仅供单节点测试使用，当Pod被重新创建时，可能会被调度到与原先不同的节点上，导致新的Pod没有数据。
+
+多节点集群使用本地存储，可以使用local卷
+
+**创建local类型的PV，需要先创建存储类(StorageClass)**。
+
+```yml
+# 创建本地存储类
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: sc-mysql
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: Immediate
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-mysql
+spec:
+  capacity:
+    storage: 2Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: sc-mysql #通过指定存储类来设置卷的类型
+  local:
+    path: /mnt/disks/ssd1    #该目录须在worker1上手动创建
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - worker1
 ```
-selector:
-  matchExpressions: # tier in (cache, backend) && environment not in (dev, prod)
-    - {key: tier, operator: In, values: [cache, backend]}
-    - {key: environment, operator: NotIn, values: [dev, prod]}
+
+
+
+pod不直接使用pv，而是使用pvc
+
+```yml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-mysql
+spec:
+  storageClassName: sc-mysql  # 与PV中的storageClassName一致
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
 ```
 
-参考资料：
-
-https://kubernetes.io/zh-cn/docs/concepts/overview/working-with-objects/kubernetes-objects/
-
-https://kubernetes.io/zh-cn/docs/concepts/overview/working-with-objects/object-management/
-
-https://kubernetes.io/docs/reference/kubectl/#resource-types
-
-https://kubernetes.io/zh-cn/docs/concepts/workloads/pods/
-
-https://kubernetes.io/zh-cn/docs/concepts/overview/working-with-objects/labels/
 
 
+mysql5.7-pod.yml
 
-mysql
-
-```
+```yml
 mkdir /data/kubernetes/mysql -p
 vim mysql-pod.yml
 
@@ -936,64 +1470,234 @@ spec:
         type: DirectoryOrCreate
 ```
 
-创建MySQL数据库
+## 存储类(StorageClass)
 
-配置环境变量
+#### **一、核心概念与价值**
 
-使用[MySQL镜像](https://hub.docker.com/_/mysql)创建Pod，需要使用环境变量设置MySQL的初始密码。 [环境变量配置示例](https://kubernetes.io/zh-cn/docs/tasks/inject-data-application/define-environment-variable-container/#define-an-env-variable-for-a-container)
+1. **基本定义**
+   StorageClass 是 Kubernetes 中定义存储卷动态供给规则的 API 对象，通过声明 provisioner 和参数模板，实现按需自动创建 PV。
+2. **核心价值**
+   - **运维自动化**：无需手动预创建 PV，解决大规模集群中 PVC 频繁申请存储时的运维负担
+   - **存储分类管理**：支持定义 SSD/HDD、高性能 / 普通等不同存储类型
+   - **灵活扩展**：支持存储配额动态扩容（需存储后端支持）
 
-挂载卷 将数据存储在容器中，一旦容器被删除，数据也会被删除。 将数据存储到卷(Volume)中，删除容器时，卷不会被删除。
+#### **二、核心组件与工作原理**
 
-hostPath卷 hostPath 卷将主机节点上的文件或目录挂载到 Pod 中。
+1. **核心字段解析**
+
+   ```yaml
+   apiVersion: storage.k8s.io/v1
+   kind: StorageClass
+   metadata:
+     name: nfs-storage
+   provisioner: k8s-sigs.io/nfs-subdir-external-provisioner  # 存储驱动
+   reclaimPolicy: Retain                                   # 回收策略
+   allowVolumeExpansion: true                             # 允许在线扩容
+   parameters:
+     archiveOnDelete: "false"                             # NFS专有参数
+   ```
+
+2. **核心组件关系**
+
+   ```plaintext
+   PVC → StorageClass → Provisioner → 存储后端 → 自动创建PV
+   ```
+
+------
 
 
 
-[hostPath配置示例](https://kubernetes.io/docs/concepts/storage/volumes/#hostpath-configuration-example)
+#### **三、NFS Provisioner 部署实践**
 
-hostPath的type值：
+1. **部署前提条件**
 
-| **DirectoryOrCreate** | **目录不存在则自动创建。**                                   |
-| --------------------- | ------------------------------------------------------------ |
-| **Directory**         | **挂载已存在目录。不存在会报错。**                           |
-| **FileOrCreate**      | **文件不存在则自动创建。\****不会自动创建文件的父目录，必须确保文件路径已经存在。** |
-| **File**              | **挂载已存在的文件。不存在会报错。**                         |
-| **Socket**            | **挂载 UNIX 套接字。例如挂载\****/var/run/docker.sock进程**  |
+   - 已部署 NFS 服务器（共享目录：`/data/nfs_pro`）
+   - 节点已安装 `nfs-utils` 包
 
-**注意：hostPath** 仅用于在单节点集群上进行开发和测试，不适用于多节点集群；
+2. **关键配置步骤**
+   **步骤 1：创建 ServiceAccount 和 RBAC**
 
-例如，当Pod被重新创建时，可能会被调度到与原先不同的节点上，导致新的Pod没有数据。
+   ```yaml
+   # rbac.yaml
+   apiVersion: v1
+   kind: ServiceAccount
+   metadata:
+     name: nfs-provisioner
+   ---
+   kind: ClusterRole
+   apiVersion: rbac.authorization.k8s.io/v1
+   metadata:
+     name: nfs-provisioner-runner
+   rules:
+     - resources: ["persistentvolumes"]
+       verbs: ["get", "list", "watch", "create", "delete"]
+     - resources: ["persistentvolumeclaims"]
+       verbs: ["get", "list", "watch", "update"]
+   ---
+   kind: ClusterRoleBinding
+   apiVersion: rbac.authorization.k8s.io/v1
+   metadata:
+     name: run-nfs-provisioner
+   subjects:
+     - kind: ServiceAccount
+       name: nfs-provisioner
+       namespace: default
+   roleRef:
+     kind: ClusterRole
+     name: nfs-provisioner-runner
+     apiGroup: rbac.authorization.k8s.io
+   ```
 
-在多节点集群使用本地存储，可以使用`local`卷。
+   **步骤 2：部署 NFS Provisioner**
+
+   ```yaml
+   # deployment.yaml
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: nfs-client-provisioner
+   spec:
+     replicas: 1
+     strategy:
+       type: Recreate
+     selector:
+       matchLabels:
+         app: nfs-client-provisioner
+     template:
+       metadata:
+         labels:
+           app: nfs-client-provisioner
+       spec:
+         serviceAccountName: nfs-provisioner
+         containers:
+           - name: nfs-client-provisioner
+             image: k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2
+             volumeMounts:
+               - name: nfs-root
+                 mountPath: /persistentvolumes
+             env:
+               - name: NFS_SERVER
+                 value: 192.168.101.11    # NFS服务器IP
+               - name: NFS_PATH
+                 value: /data/nfs_pro     # 共享目录路径
+         volumes:
+           - name: nfs-root
+             nfs:
+               server: 192.168.101.11
+               path: /data/nfs_pro
+   ```
 
 
+
+------
+
+
+
+#### **四、最佳实践指南**
+
+1. **存储分类策略**
+
+   - 按性能分级：创建 `gold-storage`（SSD）、`silver-storage`（高性能 HDD）、`bronze-storage`（普通 HDD）
+   - 按使用场景：区分数据库存储、日志存储、缓存存储
+
+2. **默认存储类配置**
+
+   ```bash
+   kubectl patch storageclass nfs-storage -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+   ```
+
+3. **监控与告警**
+
+   ```yaml
+   # Prometheus 监控规则示例
+   - alert: StorageClassProvisionFail
+     expr: kube_persistentvolumeclaim_annotations{annotation_storage_kubernetes_io_failure-domain!=~".*"} > 0
+     for: 5m
+     labels:
+       severity: critical
+     annotations:
+       summary: "Storage provisioning failed for PVC {{ $labels.persistentvolumeclaim }}"
+   ```
+
+4. **数据安全策略**
+
+   - 生产环境建议设置 `reclaimPolicy: Retain`
+   - 定期备份 NFS 存储目录（使用 Velero 或 rsync）
+
+
+
+------
+
+
+
+#### **五、故障排查速查表**
+
+
+
+| 现象                  | 排查点                                                       | 解决方案                                      |
+| --------------------- | ------------------------------------------------------------ | --------------------------------------------- |
+| PVC 处于 Pending 状态 | 1. StorageClass 是否存在 2. Provisioner Pod 是否运行正常     | 检查 SC 配置 查看 Provisioner 日志            |
+| PV 创建但无法挂载     | 1. NFS 服务器连通性 2. 防火墙规则                            | `telnet <NFS_IP> 2049` 检查 iptables/nftables |
+| 存储扩容失败          | 1. 存储后端是否支持在线扩容 2. StorageClass 是否开启 allowVolumeExpansion | 确认存储系统能力 更新 SC 配置                 |
+
+
+
+------
+
+
+
+#### **六、版本兼容性说明**
+
+| Kubernetes 版本 | 推荐 Provisioner 版本                  | 注意事项                  |
+| --------------- | -------------------------------------- | ------------------------- |
+| 1.20+           | nfs-subdir-external-provisioner:v4.0.2 | 需启用 CSIDriver 特性门控 |
+| 1.18-1.19       | nfs-subdir-external-provisioner:v3.0.0 | 需配置额外的 mountOptions |
 
 
 
 ## ConfigMap与Secret
 
-Docker中，一般通过 绑定挂载 的方式将 配置文件 挂载到 容器里。 在Kubernetes集群中，容器可能被调度到任意节点，配置文件需要能在 集群中任意节点上 访问、分发和更新。
+| **特性**     | **ConfigMap**                              | **Secret**                                |
+| ------------ | ------------------------------------------ | ----------------------------------------- |
+| **用途**     | 存储**非敏感配置**（如环境变量、配置文件） | 存储**敏感数据**（如密码、密钥、令牌）    |
+| **数据格式** | 明文（键值对或文件）                       | Base64 编码（自动加密存储，但非完全安全） |
+| **典型场景** | 应用配置、命令行参数、配置文件挂载         | 数据库密码、API 密钥、TLS 证书            |
+| **安全性**   | 不加密，直接暴露                           | 默认 Base64 编码，支持加密存储（需配置）  |
 
- ConfigMap 
 
-ConfigMap 用来在 键值对数据库(etcd)中保存非加密数据。**一般用来保存配置文件**。
+
+Docker中，一般通过 绑定挂载 的方式将 配置文件 挂载到 容器里。 
+
+Kubernetes集群中，容器可能被调度到任意节点，配置文件需要能在 集群中任意节点上 访问、分发和更新。
+
+
+
+ConfigMap 
+
+ConfigMap 在 键值对数据库(etcd)中保存非加密数据。**一般用来保存配置文件**。
 
 ConfigMap 可用作 环境变量、命令行参数或者存储卷。
 
 ConfigMap 将 环境配置信息 与 [容器镜像](https://kubernetes.io/zh-cn/docs/reference/glossary/?all=true#term-image) 解耦，便于配置的修改。
 
-ConfigMap 在设计上不是用来保存大量数据的。
-
-在 ConfigMap 中保存的数据不可超过 1 MiB。
-
-超出此限制，需要考虑 挂载存储卷 或者 访问文件存储服务。
+ConfigMap 在设计上不是用来保存大量数据的。保存的数据不可超过 1 MiB。超出此限制，需考虑 挂载存储卷 或者 访问文件存储服务。
 
  ConfigMap用法 
+
+```yml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hellok8s-config
+data:
+  DB_URL: "http://DB_ADDRESS_DEV"
+```
 
 ●[ConfigMap配置示例](https://kubernetes.io/docs/concepts/configuration/configmap/#configmaps-and-pods)
 
 ●[Pod中使用ConfigMap](https://kubernetes.io/docs/concepts/configuration/configmap/#using-configmaps-as-files-from-a-pod)
 
-```
+```yml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -1046,7 +1750,7 @@ data:
 
 
 
-## Secret
+Secret
 
 Secret 用于 保存机密数据 的对象。一般由于保存密码、令牌或密钥等。 
 
@@ -1056,16 +1760,17 @@ stringData存储未编码的字符串。
 
 Secret 意味着你不需要在应用程序代码中包含机密数据，减少机密数据(如密码)泄露的风险。
 
-Secret 可以用作环境变量、命令行参数或者存储卷文件。
+Secret 可以用作 环境变量、命令行参数或者存储卷文件。
 
 Secret用法
 
 - [Secret配置示例](https://kubernetes.io/zh-cn/docs/concepts/configuration/secret/#use-case)
 - [将Secret用作环境变量](https://kubernetes.io/zh-cn/docs/concepts/configuration/secret/#using-secrets-as-environment-variables)
 
-```
+```yml
 echo -n 'root' | base64
 echo 'cm9vdA==' | base64 --decode
+
 apiVersion: v1
 kind: Secret
 metadata:
@@ -1127,207 +1832,11 @@ data:
 
 
 
-## 卷(Volume)
-
-将 数据存储 在容器中，一旦容器被删除，数据也会被删除。
-
-卷 独立于 容器之外 的 一块存储区域，通过挂载(Mount)的方式 供Pod中的容器使用。 使用场景
-
-- 在多个容器之间共享数据。
-- 将容器数据存储在外部存储或云存储上。
-- 容易备份或迁移。
-
-
-
-#### 常见的卷类型
-
-- **临时卷(Ephemeral Volume)：**与 Pod 一起创建和删除，生命周期与 Pod 相同
-- - [emptyDir](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#emptydir)  - 作为缓存或存储日志
-  - [configMap](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#configmap) 、[secret](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#secret)、 [downwardAPI](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#downwardapi) - 给Pod注入数据
-- **持久卷(Persistent Volume)：**删除Pod后，持久卷不会被删除
-- - 本地存储 - [hostPath](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#hostpath)、 [local](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#local)
-- - 网络存储 - [NFS](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#nfs)
-  - 分布式存储 - Ceph([cephfs](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#cephfs)文件存储、[rbd](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#rbd)块存储)
-- **投射卷(Projected Volumes)：**[projected](https://kubernetes.io/zh-cn/docs/concepts/storage/projected-volumes/) 卷可以将多个卷映射到同一个目录上
-
-
-
-#### 后端存储
-
-一个集群中 可包含多种存储(如`local`、`NFS`、`Ceph`或云存储)。
-
-每种存储都对应一个**存储类（StorageClass）** ，存储类 用来 创建和管理持久卷，是集群与存储服务之间的桥梁。
-
-管理员创建持久卷(**PV**)时，通过设置不同的**StorageClass**来创建不同类型的持久卷。
-
-![image.png](https://cdn.nlark.com/yuque/0/2022/png/28915315/1666320617840-eeb42675-6e6d-4306-910a-080017b7975b.png?x-oss-process=image%2Fformat%2Cwebp%2Fresize%2Cw_1406%2Climit_0)
-
-参考文档：
-
-https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/
-
-https://kubernetes.io/zh-cn/docs/concepts/storage/ephemeral-volumes/
-
-https://kubernetes.io/zh-cn/docs/tasks/configure-pod-container/configure-volume-storage/
-
-
-
-```
-[root@k8s-worker2 conf-volume]# ll
-总用量 0
-lrwxrwxrwx 1 root root 16 2月   7 19:58 mysql.cnf -> ..data/mysql.cnf
-[root@k8s-worker2 conf-volume]# pwd
-/var/lib/kubelet/pods/539cd2e5-e4cf-4019-b518-feed135182d1/volumes/kubernetes.io~configmap/conf-volume
-删除pod时539cd2e5目录会删除
-```
-
-
-
-Ephemeral Volume
-
-与 Pod 一起创建和删除，生命周期与 Pod 相同
-
-[emptyDir](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#emptydir) - 初始内容为空的本地临时目录
-
-[configMap](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#configmap) - 为Pod注入配置文件
-
-[secret](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#secret) - 为Pod注入加密数据
-
-
-
-## 持久卷(PV)与持久卷声明(PVC)
-
-持久卷(Persistent Volume) 删除Pod后，卷不会被删除
-
-本地存储
-
-- [hostPath](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#hostpath) - 节点主机上的目录或文件
-
-- (仅供单节点测试使用；多节点集群请用 local 卷代替)
-
-- [local](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#local) - 节点上挂载的本地存储设备(不支持动态创建卷)
-
-- 网络存储
-
-- [NFS](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#nfs) - 网络文件系统 (NFS) 
-
-- 分布式存储
-
-- Ceph([cephfs](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#cephfs)文件存储、[rbd](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#rbd)块存储)
-
-  
-
-  pv pvc
-
-  持久卷（PV） 是 集群中的一块存储。可以理解为一块虚拟硬盘。
-
-  持久卷 可以由 管理员事先创建， 或者 使用[存储类（Storage Class）](https://kubernetes.io/zh-cn/docs/concepts/storage/storage-classes/)根据用户请求来动态创建。 
-
-  持久卷 属于集群的公共资源，并不属于某个namespace; 
-
-  
-
-  持久卷声明（PVC） 表达的是 用户对存储的请求。
-
-  PVC类似申请单，它更贴近云服务的使用场景，使用资源先申请，便于统计和计费。
-
-  Pod 将 PVC 声明当做存储卷来使用，PVC 可以请求指定容量的存储空间和[访问模式](https://kubernetes.io/zh-cn/docs/concepts/storage/persistent-volumes/#access-modes) 。PVC对象是带有namespace的。
-
-  
-
-  ![image-20240513163338077](k8s-note/image-20240513163338077.png?lastModify=1716449400)
-
-  
-
-  创建持久卷（PV） 
-
-  创建持久卷(PV)是服务端的行为，通常 集群管理员提前创建一些常用规格的持久卷以备使用。
-
-  hostPath仅供单节点测试使用，当Pod被重新创建时，可能会被调度到与原先不同的节点上，导致新的Pod没有数据。
-
-  多节点集群使用本地存储，可以使用local卷
-
-  **创建local类型的持久卷，需要先创建存储类(StorageClass)**。
-
-  
-
-  ```
-  # 创建本地存储类
-  apiVersion: storage.k8s.io/v1
-  kind: StorageClass
-  metadata:
-    name: sc-mysql
-  provisioner: kubernetes.io/no-provisioner
-  volumeBindingMode: Immediate
-  ---
-  apiVersion: v1
-  kind: PersistentVolume
-  metadata:
-    name: pv-mysql
-  spec:
-    capacity:
-      storage: 2Gi
-    volumeMode: Filesystem
-    accessModes:
-    - ReadWriteOnce
-    persistentVolumeReclaimPolicy: Delete
-    storageClassName: sc-mysql #通过指定存储类来设置卷的类型
-    local:
-      path: /mnt/disks/ssd1    #该目录须在worker1上手动创建
-    nodeAffinity:
-      required:
-        nodeSelectorTerms:
-        - matchExpressions:
-          - key: kubernetes.io/hostname
-            operator: In
-            values:
-            - k8s-worker1
-  ```
-
-  
-
-pod不直接使用pv，而是使用pvc
-
-apiVersion: v1 kind: PersistentVolumeClaim metadata:  name: pvc-mysql spec:  storageClassName: sc-mysql # 与PV中的storageClassName一致  accessModes:
-
-```
-- ReadWriteOnce
-resources:
-    requests:
-  storage: 2Gi
-```
-
-
-
-
-
-
-
-
-
-
-
-构建镜像
-
-nginx tomcat举例
-
-docker commit方式创建
-
-```
-for i in nginx-ingress-controller:v1.3.1 kube-webhook-certgen:v1.3.0
-do
-  docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/$i
-  docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/$i k8s-register.sswang.com/google_containers/$i
-  docker push k8s-register.sswang.com/google_containers/$i
-  docker rmi registry.cn-hangzhou.aliyuncs.com/google_containers/$i
-done
-```
-
 
 
 # helm
 
-the best way to find, share, and use software built for [Kubernetes](https://kubernetes.io/).
+package manager for Kubernetes, like yum 
 
 ![image-20240523162326257](k8s-note/image-20240523162326257.png)
 
@@ -1335,7 +1844,7 @@ the best way to find, share, and use software built for [Kubernetes](https://kub
 | ---------- | ------------------------------------------------------------ |
 | Chart      | 一个Helm包，其中包含了运行一个应用所需要的镜像、依赖和资源定义等，还可能包含Kubernetes集群中的服务定义，类似Homebrew中的formula、APT的dpkg或者Yum的rpm文件 |
 | Repository | 存储Helm Charts的地方                                        |
-| Release    | Chart在k8s上运行的Chart的一个实例，例如，如果一个MySQL Chart想在服务器上运行两个数据库，可以将这个Chart安装两次，并在每次安装中生成自己的Release以及Release名称 |
+| Release    | Chart在k8s上运行的一个实例，例如，如果一个MySQL Chart想在服务器上运行两个数据库，可以将这个Chart安装两次，并在每次安装中生成自己的Release |
 | Value      | Helm Chart的参数，用于配置Kubernetes对象                     |
 | Template   | 使用Go模板语言生成Kubernetes对象的定义文件                   |
 
@@ -1400,12 +1909,12 @@ Helm 是 Kubernetes 的包管理工具，可以帮助你简化应用的部署和
 ### Helm 常用命令及示例
 
 1. 初始化 Helm 客户端
-  如果你使用的是 Helm 3 及以上版本，客户端初始化已经不再需要，因为 Helm 3 移除了 Tiller（服务器端组件）。
+    如果你使用的是 Helm 3 及以上版本，客户端初始化已经不再需要，因为 Helm 3 移除了 Tiller（服务器端组件）。
 
   
 
 2. 添加 Chart 仓库
-  添加一个 Helm Chart 仓库以便下载和使用官方或第三方的 Charts。
+    添加一个 Helm Chart 仓库以便下载和使用官方或第三方的 Charts。
 
 ```
 helm repo add stable https://charts.helm.sh/stable
@@ -1414,7 +1923,7 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 
 
 3. 更新本地 Chart 仓库索引
-  更新本地存储的 Chart 仓库索引以获取最新的 Charts。
+    更新本地存储的 Chart 仓库索引以获取最新的 Charts。
 
   ```
   helm repo update
@@ -1423,7 +1932,7 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
   
 
 4. 搜索 Chart
-  搜索特定名称的 Chart。
+    搜索特定名称的 Chart。
 
   ```
   helm search repo redis
@@ -1452,7 +1961,7 @@ bitnami/redis 是 Chart 名称。
 
 
 7. 列出已安装的 Releases
-  列出当前命名空间下的所有已安装的 Releases。
+    列出当前命名空间下的所有已安装的 Releases。
 
   ```
   helm list
@@ -1468,7 +1977,7 @@ helm upgrade my-redis bitnami/redis --version 20.8.0
 
 
 9. 回滚 Release
-  回滚到之前的版本。
+    回滚到之前的版本。
 
   ```
   helm history my-redis -n default
@@ -1582,8 +2091,8 @@ helm search repo redis
 ### 查看 Redis Chart 的详细信息
 helm show chart bitnami/redis
 安装和管理 Release
- 
- 
+
+
 ### 安装 Redis Chart
 helm install my-redis bitnami/redis --version 20.7.1
 
@@ -1599,8 +2108,8 @@ helm rollback my-redis 1
 ### 删除 Redis Release
 helm uninstall my-redis
 使用自定义值文件
- 
- 
+
+
 ### 下载默认值文件
 helm show values bitnami/redis > default-values.yaml
 
@@ -1609,8 +2118,8 @@ helm show values bitnami/redis > default-values.yaml
 ### 使用自定义值文件安装 Redis
 helm install my-redis bitnami/redis -f ./my-values.yaml
 创建和打包新的 Chart
- 
- 
+
+
 ### 创建一个新的 Chart 模板
 helm create my-chart
 
@@ -1619,3 +2128,9 @@ helm lint my-chart
 
 ### 打包 Chart
 helm package my-chart
+
+---
+
+# Prometheus 
+
+ Prometheus 的原理
