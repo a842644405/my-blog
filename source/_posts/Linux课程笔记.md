@@ -803,7 +803,7 @@ ps -ef | grep   .jar
 
 
 
-## sed 
+## sed  stream editor
 
 ```sh
 # 流编辑器，用于对文本进行 模式匹配、替换、删除等操作
@@ -812,7 +812,7 @@ sed -i '2,8d' file.txt     # 删除 2-8 行
 sed -i '$d' file.txt       # 删除最后1行
 
 sed -i '/^a/d' file.txt    # 删除以a开头的行
-sed -i '/^[2021/d'app_out.log
+sed -i '/^2021/d' app_out.log #删除 app_out.log 文件中以 "2021" 开头的行
 sed -i '/7$/d' file.txt    # 删除以7结尾的行（7可以为任意字符串）
 
 sed -i '/2022/d' file.txt    # 删除包含2022的行
@@ -821,8 +821,8 @@ sed -i '/2022/d' file.txt    # 删除包含2022的行
 sed -i.bak 's/198\.18\.128\.220/198.18.128.100/g' serverConfig.json
 #文件夹批量替换
 find /jydata/config-100 -type f -exec sed -i 's/198.18.128.220/198.18.128.100/g' {} \;
+---
 #!/bin/bash
-
 # 假设需要替换的IP地址作为环境变量传入
 OLD_IP=198.18.128.220
 NEW_IP=198.18.128.100
@@ -852,12 +852,13 @@ fi
 
 
 
-## awk
+## awk 
 
 ```sh
 #文本处理工具，它可以处理每一行中的字段，并执行复杂的文本操作。
 #示例：打印文件中的第 2 列。
 awk '{print $2}' filename.txt
+awk -F',' '{ print $1, $2 }' filename.csv
 ```
 
 

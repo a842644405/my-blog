@@ -3,13 +3,157 @@ title: k8s-note
 date: 2024-05-23 15:29:16
 ---
 
+# Kubernetes 集群的架构和原理
+
+可参考https://zhuanlan.zhihu.com/p/654662196
+
+---
+
+![](k8s-note/k8s-architecture.png)
+
+## 一、核心架构概览
+
+Kubernetes 集群由 **Master 控制平面** 和 **Worker 节点** 组成，遵循声明式 API 和 控制器模式。
+
+### 1. Master 节点组件
+- **API Server（kube-apiserver）**  
+  - 集群的“网关”，所有操作通过 RESTful API 完成。  
+  - 负责 认证、授权、请求校验，并将状态持久化到 etcd。  
+- **etcd**  
+  - 分布式键值存储，保存集群所有资源的当前状态。  
+  - 使用 Raft 协议保证一致性。  
+- **Controller Manager（kube-controller-manager）**  
+  - 运行多种控制器，通过控制循环确保实际状态与期望状态一致。  
+- **Scheduler（kube-scheduler）**  
+  - 负责将未调度的 Pod 分配到合适的 Node。  
+
+### 2. Worker 节点组件
+- **kubelet**  
+  - 管理 Pod 生命周期，上报节点状态。  
+- **kube-proxy**  
+  - 维护网络规则，实现 Service 负载均衡。  
+- **容器运行时**  
+  - 如 containerd、CRI-O，通过 CRI 接口与 kubelet 交互。  
+
+---
+
+## 二、关键交互机制
+### 1. API Server 的核心作用
+- 所有组件通过 **Watch 机制** 监听资源变化。  
+- 组件之间通过 API Server 中介通信。  
+
+### 2. 控制器的工作原理
+- **控制循环（Reconcile Loop）**  
+  - 比较 `spec` 和 `status`，触发调谐逻辑。  
+
+### 3. etcd 的角色
+- 资源对象以键值形式存储（如 `/registry/pods/<namespace>/<pod-name>`）。  
+
+
+
+## 三、**网络模型**
+
+#### 1. **Pod 网络**
+
+- 每个 Pod 拥有独立 IP（IP-per-Pod），跨节点通信需通过 CNI（Container Network Interface）插件（如 Calico、Flannel）。
+- 同一 Pod 内容器共享网络命名空间，通过 `localhost` 通信。
+
+#### 2. **Service 网络**
+
+- **Service** 提供稳定的虚拟 IP（ClusterIP），通过标签选择器关联后端 Pod。
+- **kube-proxy** 实现流量转发：
+  - iptables 模式：基于规则链匹配目标 IP 和端口。
+  - IPVS 模式：使用内核级负载均衡，适合大规模集群。
+
+#### 3. **Ingress**
+
+- 通过 Ingress Controller（如 Nginx、Traefik）暴露 HTTP/HTTPS 服务，支持路径路由和 TLS 终止。
+
+------
+
+## 四、**存储设计**
+
+#### 1. **Volume**
+
+- 临时卷（emptyDir）与持久卷（PersistentVolume，PV）。
+- **PersistentVolumeClaim（PVC）**：用户通过 PVC 申请存储资源，由 StorageClass 动态供给或静态绑定。
+
+#### 2. **CSI（Container Storage Interface）**
+
+- 标准化插件接口，允许第三方存储系统（如 AWS EBS、Ceph）集成到 Kubernetes。
+
+------
+
+## 五、**调度与资源管理**
+
+#### 1. **调度流程**
+
+- **预选（Predicates）**：过滤不满足条件的节点（如资源不足）。
+- **优选（Priorities）**：对节点打分（如资源利用率、亲和性），选择最优节点。
+
+#### 2. **资源限制**
+
+- 通过 `requests` 和 `limits` 定义 CPU/内存的请求和上限，影响调度和 QoS 等级（Guaranteed、Burstable、BestEffort）。
+
+#### 3. **高级调度策略**
+
+- 节点亲和性（Node Affinity）、Pod 亲和性/反亲和性（Pod Anti-Affinity）。
+- 污点和容忍（Taints and Tolerations）：限制 Pod 调度到特定节点。
+
+------
+
+## 六、**安全机制**
+
+#### 1. **认证（Authentication）**
+
+- 支持 X509 客户端证书、Bearer Token、ServiceAccount 等方式。
+
+#### 2. **授权（Authorization）**
+
+- RBAC（Role-Based Access Control）：通过 Role 和 RoleBinding 定义权限。
+
+#### 3. **准入控制（Admission Control）**
+
+- 动态准入 Webhook：在资源持久化前修改或验证请求（如 Pod 安全策略）。
+
+------
+
+## 七、**扩展机制**
+
+#### 1. **CRD（Custom Resource Definition）**
+
+- 自定义资源类型（如 `CronTab`），扩展 Kubernetes API。
+
+#### 2. **Operator 模式**
+
+- 结合 CRD 和控制器，实现应用生命周期管理（如 etcd Operator）。
+
+------
+
+## 八、**调试与故障排查**
+
+1. **查看组件日志**：
+   - Master 组件：`kube-apiserver`、`kube-controller-manager`、`kube-scheduler`。
+   - Worker 组件：`kubelet`、`kube-proxy`。
+2. **使用 `kubectl` 工具**：
+   - `kubectl describe`：查看资源详细状态和事件。
+   - `kubectl logs`：获取容器日志。
+   - `kubectl exec`：进入容器调试。
+3. **检查网络连通性**：
+   - 使用 `nslookup`、`curl` 验证 DNS 和 Service 访问
+
+---
+
+## 九、实践建议
+1. **手动搭建集群**：使用 `kubeadm` 或二进制部署。  
+2. **阅读官方文档**：  
+   - [Kubernetes 架构](https://kubernetes.io/docs/concepts/overview/components/)  
+   - [设计文档](https://github.com/kubernetes/community/tree/master/contributors/design-proposals)  
+3. **源码分析**：研究核心控制器逻辑。  
+
 # k8s 
 
-[Kubernetes](https://v1-27.docs.kubernetes.io/docs/concepts/overview/), also known as K8s, is an open-source system for **automating deployment, scaling, and management of containerized application**
-
-It groups containers that make up an application into logical units for easy management and discovery. Kubernetes builds upon [15 years of experience of running production workloads at Google](http://queue.acm.org/detail.cfm?id=2898444), combined with best-of-breed ideas and practices from the community
-
-https://kubernetes.io/
+Kubernetes is an open source **container orchestration engine** for automating deployment, scaling, and management of containerized applications. 
 
 ## 部署方式
 
