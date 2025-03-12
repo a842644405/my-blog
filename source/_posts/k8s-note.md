@@ -3,7 +3,7 @@ title: k8s-note
 date: 2024-05-23 15:29:16
 ---
 
-# Kubernetes 集群的架构和原理
+# k8s 集群的架构和原理
 
 可参考https://zhuanlan.zhihu.com/p/654662196
 
@@ -13,27 +13,45 @@ date: 2024-05-23 15:29:16
 
 ## 一、核心架构概览
 
-Kubernetes 集群由 **Master 控制平面** 和 **Worker 节点** 组成，遵循声明式 API 和 控制器模式。
+k8s 集群由 **Master 控制平面** 和 **Worker 节点** 组成，遵循 声明式API 和 控制器模式。
+
+控制器模式则是 k8s 实现声明式 API 的核心机制。控制器不断监控集群状态，当实际状态与期望状态不符时，自动进行调整，确保集群始终处于预期状态 。
 
 ### 1. Master 节点组件
 - **API Server（kube-apiserver）**  
-  - 集群的“网关”，所有操作通过 RESTful API 完成。  
+  
+  - K8S API，集群统一入口(gataway)，以RESTful提供接口服务(包括认证授权、数据校验以及集群状态变更)，各组件协调者，所有资源的增删改查和监听操作都交给APIServer处理后在提交给etcd存储。 默认端口 6443
   - 负责 认证、授权、请求校验，并将状态持久化到 etcd。  
+  
 - **etcd**  
   - 分布式键值存储，保存集群所有资源的当前状态。  
   - 使用 Raft 协议保证一致性。  
+
 - **Controller Manager（kube-controller-manager）**  
-  - 运行多种控制器，通过控制循环确保实际状态与期望状态一致。  
+  - 运行多种控制器，通过**控制循环**确保实际状态与期望状态一致。  
+  - **控制循环是 k8s 实现自动化的核心机制**，通过持续observe、analyze、act和loop，确保系统始终朝着用户定义的期望状态收敛
+
 - **Scheduler（kube-scheduler）**  
-  - 负责将未调度的 Pod 分配到合适的 Node。  
+  - 负责分配调度 Pod 到集群内的节点上，它监听 kube-apiserver，查询还未分配 Node 的 Pod，然后根据调度策略为这些 Pod 分配节点（更新 Pod 的 NodeName 字段）。
+
+  调度分为两个阶段，predicate 和 priority
+  1）predicate：过滤不符合条件的节点
+  2）priority：优先级排序，选择优先级最高的节点
 
 ### 2. Worker 节点组件
-- **kubelet**  
-  - 管理 Pod 生命周期，上报节点状态。  
+- **kubelet**  端口 10250
+  
+  - kubelet是Master在Node节点上的Agent，管理本机运行容器的生命周期，比如创建容器、Pod挂载数据卷、下载Secret、获取容器节点状态工作。kubelet将每个Pod转换成一组容器。
+  
+    每个节点上都运行一个 kubelet 服务进程，默认监听 10250 端口，接收并执行 master 发来的指令，管理 Pod 及 Pod 中的容器。每个 kubelet 进程会在 API Server 上注册节点自身信息，定期向 master 节点汇报节点的资源使用情况，并通过 cAdvisor 监控节点和容器的资源。
+  
 - **kube-proxy**  
-  - 维护网络规则，实现 Service 负载均衡。  
+  - 在node节点上实现Pod网络代理，维护网络规则和四层负载均衡工作。
+    每台机器上都运行一个 kube-proxy 服务，它监听 API server 中 service 和 endpoint 的变化情况，并通过 iptables 等来为服务配置负载均衡（仅支持 TCP 和 UDP）。
+    kube-proxy 可以直接运行在物理机上，也可以以 static pod 或者 daemonset 的方式运行。
+  
 - **容器运行时**  
-  - 如 containerd、CRI-O，通过 CRI 接口与 kubelet 交互。  
+  - 如 docker、containerd、CRI-O，通过 CRI 接口与 kubelet 交互。  
 
 ---
 
@@ -55,7 +73,7 @@ Kubernetes 集群由 **Master 控制平面** 和 **Worker 节点** 组成，遵�
 
 #### 1. **Pod 网络**
 
-- 每个 Pod 拥有独立 IP（IP-per-Pod），跨节点通信需通过 CNI（Container Network Interface）插件（如 Calico、Flannel）。
+- 每个 Pod 拥有独立 IP（IP-per-Pod），**跨节点通信**需通过 CNI（Container Network Interface）插件（如 Calico、Flannel）。
 - 同一 Pod 内容器共享网络命名空间，通过 `localhost` 通信。
 
 #### 2. **Service 网络**
@@ -80,7 +98,7 @@ Kubernetes 集群由 **Master 控制平面** 和 **Worker 节点** 组成，遵�
 
 #### 2. **CSI（Container Storage Interface）**
 
-- 标准化插件接口，允许第三方存储系统（如 AWS EBS、Ceph）集成到 Kubernetes。
+- 标准化插件接口，允许第三方存储系统（如 AWS EBS、Ceph）集成到 k8s。
 
 ------
 
@@ -122,7 +140,7 @@ Kubernetes 集群由 **Master 控制平面** 和 **Worker 节点** 组成，遵�
 
 #### 1. **CRD（Custom Resource Definition）**
 
-- 自定义资源类型（如 `CronTab`），扩展 Kubernetes API。
+- 自定义资源类型（如 `CronTab`），扩展 k8s API。
 
 #### 2. **Operator 模式**
 
@@ -147,13 +165,13 @@ Kubernetes 集群由 **Master 控制平面** 和 **Worker 节点** 组成，遵�
 ## 九、实践建议
 1. **手动搭建集群**：使用 `kubeadm` 或二进制部署。  
 2. **阅读官方文档**：  
-   - [Kubernetes 架构](https://kubernetes.io/docs/concepts/overview/components/)  
-   - [设计文档](https://github.com/kubernetes/community/tree/master/contributors/design-proposals)  
+   - [k8s 架构](https://k8s.io/docs/concepts/overview/components/)  
+   - [设计文档](https://github.com/k8s/community/tree/master/contributors/design-proposals)  
 3. **源码分析**：研究核心控制器逻辑。  
 
 # k8s 
 
-Kubernetes is an open source **container orchestration engine** for automating deployment, scaling, and management of containerized applications. 
+k8s is an open source **container orchestration engine** for automating deployment, scaling, and management of containerized applications. 
 
 ## 部署方式
 
@@ -169,9 +187,9 @@ Kubernetes is an open source **container orchestration engine** for automating d
 
 ​												传统二进制	  																					kubeadm
 
+## 整体架构
 
-
-![image-20240412193615615](k8s-note/image-20240412193615615.png?lastModify=1716449400)				..
+![image-20240412193615615](k8s-note/image-20240412193615615.png?lastModify=1716449400)
 
 ![image-20240412193834338](k8s-note/image-20240412193834338.png?lastModify=1716449400)
 
@@ -183,7 +201,9 @@ Kubernetes is an open source **container orchestration engine** for automating d
 
 ![image-20240416230934803](k8s-note/image-20240416230934803.png?lastModify=1716449400)
 
-pod创建方式及流程
+## pod创建方式及流程
+
+**方式**
 
 **命令行**      kubectl run my-pod --image=nginx --restart=Never 
 
@@ -200,22 +220,21 @@ spec:
       image: nginx:1.21
 ```
 
-**Pod创建流程**
+**流程**
 
-1 Kubernetes API Server 接收请求
-	当你执行 kubectl apply 命令时，kubectl 会将 YAML 文件的内容转换为 JSON 格式，并通过 REST API 发送到 Kubernetes API Server。
+1 k8s API Server 接收请求
+	当你执行 kubectl apply 命令时，kubectl 会将 YAML 文件的内容转换为 JSON 格式，并通过 REST API 发送到 k8s API Server。
 	API Server 验证请求的有效性（如权限检查、资源定义的合法性等）。
 
 2 API Server 处理请求
-	API Server 将接收到的资源对象存储到 etcd 中（etcd 是 Kubernetes 的分布式键值存储系统，用于存储集群的所有状态数据）。
+	API Server 将接收到的资源对象存储到 etcd 中（etcd 是 k8s 的分布式键值存储系统，用于存储集群的所有状态数据）。
 	API Server 还会通知所有相关的控制器（Controller），告知有一个新的 Pod 被创建。
 3 调度器（Scheduler）选择节点
-	Kubernetes 调度器（Scheduler）负责将新创建的 Pod 分配到合适的节点上。
+	调度器（Scheduler）负责将新创建的 Pod 分配到合适的节点上。
 	调度器会考虑多种因素，包括节点的资源可用性（CPU、内存等）、亲和性和反亲和性规则、污点和容忍等。
 4 Kubelet 拉取镜像并启动容器
 	当调度器决定将 Pod 分配给某个节点后，该节点上的 Kubelet 组件会收到通知。
-	Kubelet 负责在该节点上实际运行容器：
-		Kubelet 会从指定的镜像仓库（例如 Docker Hub）拉取 nginx:1.21 镜像。
+		Kubelet 通过cri调用docker从指定的镜像仓库（例如 Docker Hub）拉取 nginx:1.21 镜像。
 		拉取完成后，Kubelet 使用容器运行时（如 containerd 或 Docker）启动容器。
 5 健康检查和状态更新
 	容器启动后，Kubelet 会定期进行健康检查（如果配置了 Liveness 和 Readiness Probes）。
@@ -514,7 +533,7 @@ docker images
 #备份配置 
 cp harbor.yml.tmpl harbor.yml
 #修改配置
-[root@kubernetes-register /data/server/harbor]# vim harbor.yml
+[root@k8s-register /data/server/harbor]# vim harbor.yml
 
 # 修改主机名
 hostname: k8s-register.sswang.com
@@ -598,10 +617,10 @@ docker tag busybox k8s-register.sswang.com/vj/busybox:v0.1
 docker tag busybox harbor域名    			 /仓库/镜像:tag
 
 推送镜像
-docker push kubernetes-register.sswang.com/vj/busybox:v0.1
+docker push k8s-register.sswang.com/vj/busybox:v0.1
 
 从集群中的其他节点上拉取镜像
-docker pull kubernetes-register.sswang.com/vj/busybox:v0.1
+docker pull k8s-register.sswang.com/vj/busybox:v0.1
 ```
 
 
@@ -618,7 +637,7 @@ docker pull kubernetes-register.sswang.com/vj/busybox:v0.1
 
 Installing kubeadm
 
-https://v1-27.docs.kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+https://v1-27.docs.k8s.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
 
 K8s集群初始化
 
@@ -626,14 +645,14 @@ K8s集群初始化
 
 ```sh
 #软件源定制
-cat > /etc/yum.repos.d/kubernetes.repo << EOF
-[kubernetes]
-name=Kubernetes
-baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64
+cat > /etc/yum.repos.d/k8s.repo << EOF
+[k8s]
+name=k8s
+baseurl=https://mirrors.aliyun.com/k8s/yum/repos/k8s-el7-x86_64
 enabled=1
 gpgcheck=0
 repo_gpgcheck=0
-gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg https://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
+gpgkey=https://mirrors.aliyun.com/k8s/yum/doc/yum-key.gpg https://mirrors.aliyun.com/k8s/yum/doc/rpm-package-key.gpg
 EOF
 
 #更新软件源
@@ -704,10 +723,10 @@ kubeadm join 192.168.101.120:6443 --token q59806.z4krgs4h1yp13qjr --discovery-to
 #安装失败后可能用到的命令
 yum install lsof -y
 sudo kill $(sudo lsof -t -i :6443) $(sudo lsof -t -i :10259) $(sudo lsof -t -i :10257) $(sudo lsof -t -i :10250)&&$(sudo lsof -t -i :2380)&&$(sudo lsof -t -i :2379)&&
-sudo rm /etc/kubernetes/manifests/kube-apiserver.yaml&&
-sudo rm /etc/kubernetes/manifests/kube-controller-manager.yaml&&
-sudo rm /etc/kubernetes/manifests/kube-scheduler.yaml&&
-sudo rm /etc/kubernetes/manifests/etcd.yaml&&
+sudo rm /etc/k8s/manifests/kube-apiserver.yaml&&
+sudo rm /etc/k8s/manifests/kube-controller-manager.yaml&&
+sudo rm /etc/k8s/manifests/kube-scheduler.yaml&&
+sudo rm /etc/k8s/manifests/etcd.yaml&&
 sudo rm -rf /var/lib/etcd/*
 
 %s/192.168.101.12/192.168.101.121/g
@@ -734,9 +753,9 @@ source ~/.bashrc
 
 
 ```sh
-#Flannel是CoreOS团队针对Kubernetes设计的一个网络规划服务。主要功能是让集群中的不同节点主机创建的Docker容器都具有全集群唯一的虚拟IP地址。这样，即使容器在不同的主机上运行，它们之间也可以像在同一个网络中一样进行通信。
-mkdir /data/kubernetes/flannel -p
-cd /data/kubernetes/flannel/
+#Flannel是CoreOS团队针对k8s设计的一个网络规划服务。主要功能是让集群中的不同节点主机创建的Docker容器都具有全集群唯一的虚拟IP地址。这样，即使容器在不同的主机上运行，它们之间也可以像在同一个网络中一样进行通信。
+mkdir /data/k8s/flannel -p
+cd /data/k8s/flannel/
 wget https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
 cp kube-flannel.yml kube-flannel.yml-bak
 
@@ -752,8 +771,8 @@ vim kube-flannel.yml #修改镜像地址为harbor中的镜像
 grep image: kube-flannel.yml
 kubectl apply -f kube-flannel.yml
 #The connection to the server localhost:8080 was refused - did you specify the right host or port?
-ansible test -m copy -a "src=/etc/kubernetes/admin.conf dest=/etc/kubernetes/admin.conf"
-ansible test -m command -a "echo 'export KUBECONFIG=/etc/kubernetes/admin.conf' >> ~/.bash_profile"
+ansible test -m copy -a "src=/etc/k8s/admin.conf dest=/etc/k8s/admin.conf"
+ansible test -m command -a "echo 'export KUBECONFIG=/etc/k8s/admin.conf' >> ~/.bash_profile"
 ansible test -m shell -a "source ~/.bash_profile"
 systemctl is-active docker cri-docker kubelet
 systemctl enable docker cri-docker kubelet
@@ -776,19 +795,19 @@ Service(服务)
 
 ![image-20240520104527406](k8s-note/image-20240520104527406.png?lastModify=1716449400)
 
-Service将运行在一组 [Pods](https://kubernetes.io/zh-cn/docs/concepts/workloads/pods/) 上的应用程序 公开为 网络服务 的抽象方法。
+Service将运行在一组 [Pods](https://k8s.io/zh-cn/docs/concepts/workloads/pods/) 上的应用程序 公开为 网络服务 的抽象方法。
 
 Service为一组 Pod 提供相同的 DNS 名(service name），并且在它们之间进行负载均衡。
 
-Kubernetes 为 Pod 分配了IP 地址，但IP地址可能会发生变化。
+k8s 为 Pod 分配了IP 地址，但IP地址可能会发生变化。
 
 集群内的容器可以通过 service名称 访问服务，而不需要担心Pod的IP发生变化。
 
-Kubernetes Service 定义了这样一种抽象：
+k8s Service 定义了这样一种抽象：
 
 逻辑上的一组可以互相替换的 Pod，通常称为微服务。 
 
-Service 对应的 Pod 集合通常是通过[选择算符](https://kubernetes.io/zh-cn/docs/concepts/overview/working-with-objects/labels/)来确定的。 
+Service 对应的 Pod 集合通常是通过[选择算符](https://k8s.io/zh-cn/docs/concepts/overview/working-with-objects/labels/)来确定的。 
 
 举个例子，在一个Service中运行了3个nginx的副本。这些副本是可互换的，我们不需要关心它们调用了哪个nginx，也不需要关注 Pod的运行状态，只需要调用这个服务就可以了。
 
@@ -800,10 +819,10 @@ Service 对应的 Pod 集合通常是通过[选择算符](https://kubernetes.io/
 
 Service_type：
 
-- ClusterIP：将服务公开在集群内部。kubernetes会给服务分配一个集群内部的 IP，集群内的所有主机都可以通过这个Cluster-IP访问服务。集群内部的Pod可以通过service名称访问服务。
-- [NodePort](https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/#type-nodeport)：通过每个节点的主机IP 和静态端口（NodePort）暴露服务。 集群的外部主机可以使用节点IP和NodePort访问服务.
-- [ExternalName](https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/#externalname)：将集群外部的网络引入集群内部。
-- [LoadBalancer](https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/#loadbalancer)：使用云提供商的负载均衡器向外部暴露服务。 
+- ClusterIP：将服务公开在集群内部。k8s会给服务分配一个集群内部的 IP，集群内的所有主机都可以通过这个Cluster-IP访问服务。集群内部的Pod可以通过service名称访问服务。
+- [NodePort](https://k8s.io/zh-cn/docs/concepts/services-networking/service/#type-nodeport)：通过每个节点的主机IP 和静态端口（NodePort）暴露服务。 集群的外部主机可以使用节点IP和NodePort访问服务.
+- [ExternalName](https://k8s.io/zh-cn/docs/concepts/services-networking/service/#externalname)：将集群外部的网络引入集群内部。
+- [LoadBalancer](https://k8s.io/zh-cn/docs/concepts/services-networking/service/#loadbalancer)：使用云提供商的负载均衡器向外部暴露服务。 
 
 2种方式 命令行 yml
 
@@ -840,9 +859,11 @@ curl nginx-service:8080
 
 **命名空间是什么？**
 
- • 一句话解释：命名空间是 Kubernetes 中的 “虚拟文件夹”，用来隔离不同环境、团队或项目的资源。
+ • 一句话解释：命名空间是 k8s 中的 “虚拟文件夹”，用来隔离不同环境、团队或项目的资源。
 
-命名空间(Namespace)是一种资源隔离机制，将同一集群中的资源划分为相互隔离的组。  例如我们可以设置开发、测试、生产等多个命名空间。 同一ns内的资源名称要唯一，但跨ns时没有这个要求。  ns作用域仅针对带有名字空间的对象，例如 Deployment、Service 等。 这种作用域对集群访问的对象不适用，例如 StorageClass、Node、PersistentVolume 等。
+命名空间(Namespace)是一种资源隔离机制，将同一集群中的资源划分为相互隔离的组。  
+
+例如我们可以设置开发、测试、生产等多个命名空间。 同一ns内的资源名称要唯一，但跨ns时没有这个要求。  ns作用域仅针对带有名字空间的对象，例如 Deployment、Service 等。 这种作用域对集群访问的对象不适用，例如 StorageClass、Node、PersistentVolume 等。
 
 **命名空间的作用**
 
@@ -861,37 +882,37 @@ curl nginx-service:8080
 
     
 
-Kubernetes 默认创建的四个ns：
+k8s 默认创建的四个ns：
 
- default		    默认的命名空间，不可删除，未指定命名空间的对象都会被分配到default中。 
+**default**		    默认的命名空间，不可删除，未指定命名空间的对象都会被分配到default中。 
 
-kube-system Kubernetes 系统对象(控制平面和Node组件)所使用的命名空间。
+**kube-system** k8s系统资源(控制平面和Node组件)所使用的命名空间。
 
- kube-public   自动创建的公共命名空间，所有用户（包括未经过身份验证的用户）都可以读取它。通常我们约定，将整个集群中公用的可见和可读的资源放在这个空间中。 
+**kube-public**   自动创建的公共命名空间，所有用户（包括未经过身份验证的用户）都可以读取它。通常我们约定，将整个集群中公用的可见和可读的资源放在这个空间中。 
 
- kube-node-lease  租约（Lease）对象使用的命名空间。每个节点都有一个关联的 lease 对象，lease 是一种轻量级资源。lease对象通过发送心跳，检测集群中的每个节点是否发生故障。
+**kube-node-lease**  租约（Lease）对象使用的命名空间。每个节点都有一个关联的 lease 对象，lease 是一种轻量级资源。lease对象通过发送心跳，检测集群中的每个节点是否发生故障。
 
 
 
 ns相关操作
 
-```
-#创建命名空间
+```yml
+#增
 kubectl create namespace dev
-#查看命名空间
+#查
 kubectl get ns
 
 #在命名空间内运行Pod
 kubectl run nginx    --image=nginx:1.21 --namespace=dev
 kubectl run my-nginx --image=nginx:1.21 -n=dev
 
-#查看命名空间内的Pod
+#查 指定ns
 kubectl get pods -n=dev
 
-#查看命名空间内所有对象
+#查 指定ns内所有对象
 kubectl get all -n dev
 
-# 删除命名空间会删除命名空间下的所有内容
+# 删 会删除命名空间下的所有内容
 kubectl delete ns dev
 
 #查看当前上下文
@@ -942,23 +963,56 @@ kubectl config set-context --current --namespace=dev
 
 **对象管理**
 
-**命令行指令**
+**命令行指令**  简单、快速、高效。但功能有限，不适合复杂场景，操作不容易追溯，多用于开发和调试。
 
-例如，使用kubectl命令来创建和管理 Kubernetes 对象。
+```yml
+kubectl create deployment nginx --image=nginx
+```
 
-命令行就好比口头传达，简单、快速、高效。
 
-但功能有限，不适合复杂场景，操作不容易追溯，多用于开发和调试。
 
-**声明式对象配置yaml**
+**声明式对象配置 yaml**
 
-使用yaml文件来描述 Kubernetes 对象。
+使用yaml文件来描述 k8s 对象。
 
 声明式配置就好比申请表，学习难度大且配置麻烦。
 
 好处是操作留痕，适合操作复杂的对象，多用于生产。
 
- 
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+spec:
+  type: NodePort
+  selector:
+    app: nginx
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+```
 
 常用命令缩写
 
@@ -976,16 +1030,16 @@ kubectl config set-context --current --namespace=dev
 
 配置对象
 
-在创建的 Kubernetes 对象所对应的 `yaml`文件中，需要配置的字段如下：
+在创建的 k8s 对象所对应的 `yaml`文件中，需要配置的字段如下：
 
-- apiVersion	Kubernetes API 的版本
-- kind			   对象类别，例如`Pod`、`Deployment`、`Service`、`ReplicaSet`等
+- apiVersion    k8s API 的版本
+- kind			  对象类别，例如`Pod`、`Deployment`、`Service`、`ReplicaSet`等
 - metadata     描述对象的元数据，包括一个 name 字符串、UID 和可选的 namespace
-- spec              对象的配置
+- spec             对象的期望配置
 
 
 
-## [Pod配置模版](https://kubernetes.io/zh-cn/docs/concepts/workloads/pods/#using-pods)
+## [Pod配置模版](https://k8s.io/zh-cn/docs/concepts/workloads/pods/#using-pods)
 
 ```yml
 apiVersion: v1
@@ -1080,9 +1134,11 @@ spec:
 
 在这个示例中，`StatefulSet` 创建了 3 个 MySQL 实例，每个实例都有自己的持久卷，并且 Pod 名称分别为 `db-statefulset-0`, `db-statefulset-1`, `db-statefulset-2`。
 
+## Deployment和StatefulSet区别
+
 特性			Deployment				StatefulSet
 适用场景	无状态应用	 			 有状态应用
-Pod 标识	动态分配，			无固定标识	固定标识（如 pod-name-0）
+Pod 标识	动态分配，无固定标识	固定标识（如 pod-name-0）
 存储管理	动态分配，无持久化存储	稳定的持久化存储
 更新策略	并行滚动更新	顺序滚动更新
 网络标识	无稳定网络标识	稳定的网络标识
@@ -1094,16 +1150,16 @@ Pod 标识	动态分配，			无固定标识	固定标识（如 pod-name-0）
 
 标签使用户能够以松散的方式管理对象映射，而无需客户端存储这些映射。
 
-由于一个集群中可能管理成千上万个容器，我们可以使用标签高效的进行选择和操作容器集合。
+由于一个集群中可能管理成千上万个容器，我们可以使用标签高效的进行　选择　和　操作　容器集合。
 
-## [label配置模版](https://kubernetes.io/zh-cn/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set)
+## [label配置模版](https://k8s.io/zh-cn/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set)
 
 ```yml
 apiVersion: v1
 kind: Pod
 metadata:
   name: label-demo
-  labels: #定义Pod标签
+  labels: #为Pod定义了２个标签
     environment: dev
     app: nginx
 spec:
@@ -1118,7 +1174,7 @@ kubectl get pod -l environment=dev,app=nginx
 
  
 
-### 选择器
+### 标签选择器
 
 标签选择器 可以识别 一组对象。标签不支持唯一性。
 
@@ -1132,8 +1188,8 @@ kubectl get pod -l environment=dev,app=nginx
 
 ```yml
 selector:
-  matchLabels: # component=redis && version=7.0
-    component: redis
+  matchLabels: # app=redis && version=7.0
+    app: redis
     version: 7.0
 ```
 
@@ -1150,17 +1206,17 @@ selector:
 
 
 
-## [Service配置模版](https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/#type-nodeport)
+## [Service配置模版](https://k8s.io/zh-cn/docs/concepts/services-networking/service/#type-nodeport)
 
 ### **使用模式对比**
 
-| Kind     | ClusterIP | NodePort       | LoadBalancer | ExternalName |
-| -------- | --------- | -------------- | ------------ | ------------ |
-| 网络位置 | 集群内部  | 节点 IP + 端口 | 公网 / IP    | 外部 DNS     |
-| 负载均衡 | 自动      | 节点级别       | 云厂商 LB    | 无           |
-| 适用环境 | 所有环境  | 无 LB 的裸机   | 公有云环境   | 混合云       |
-| 典型成本 | 免费      | 免费           | 按小时计费   | 免费         |
-| 服务发现 | DNS 轮询  | 手动维护       | 自动管理     | CNAME 解析   |
+| Kind     | ClusterIP | NodePort       | LoadBalancer | ExternalName | Headless |
+| -------- | --------- | -------------- | ------------ | ------------ | -------- |
+| 网络位置 | 集群内部  | 节点 IP + 端口 | 公网 / IP    | 外部 DNS     |          |
+| 负载均衡 | 自动      | 节点级别       | 云厂商 LB    | 无           |          |
+| 适用环境 | 所有环境  | 无 LB 的裸机   | 公有云环境   | 混合云       |          |
+| 典型成本 | 免费      | 免费           | 按小时计费   | 免费         |          |
+| 服务发现 | DNS 轮询  | 手动维护       | 自动管理     | CNAME 解析   |          |
 
 ------
 
@@ -1259,7 +1315,7 @@ kind: Service
 metadata:
   name: prod-lb
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.k8s.io/aws-load-balancer-type: "nlb"
 spec:
   type: LoadBalancer
   ports:
@@ -1403,7 +1459,7 @@ spec:
     - port: 80
       targetPort: 80
       # 可选字段
-      # 默认情况下，为了方便起见，Kubernetes 控制平面会从某个范围内分配一个端口号（默认：30000-32767）
+      # 默认情况下，为了方便起见，k8s 控制平面会从某个范围内分配一个端口号（默认：30000-32767）
       nodePort: 30007
 ```
 
@@ -1423,18 +1479,49 @@ spec:
 
 
 
-#### 常见的卷类型
-
-- **临时卷(Ephemeral Volume)：**与 Pod 一起创建和删除，生命周期与 Pod 相同
-- - emptyDir](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#emptydir)  - 作为缓存或存储日志
-  - [configMap](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#configmap) 、[secret](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#secret)、 [downwardAPI](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#downwardapi) - 给Pod注入数据
-- **持久卷(Persistent Volume)：**删除Pod后，持久卷不会被删除
-- - 本地存储 - [hostPath](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#hostpath)、 [local](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#local)
-- - 网络存储 - [NFS](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#nfs)
-  - 分布式存储 - Ceph([cephfs](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#cephfs)文件存储、[rbd](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#rbd)块存储)
-- **投射卷(Projected Volumes)：**[projected](https://kubernetes.io/zh-cn/docs/concepts/storage/projected-volumes/) 卷可以将多个卷映射到同一个目录上
 
 
+### Kubernetes 卷类型分类
+
+#### 1. 临时卷（Ephemeral Volumes）
+生命周期与 Pod 绑定，随 Pod 销毁而删除。
+
+- **[emptyDir](https://k8s.io/zh-cn/docs/concepts/storage/volumes/#emptydir)**  
+  - **用途**：临时存储（如缓存、临时文件）。  
+  - **特点**：Pod 启动时创建，Pod 删除时销毁。
+
+#### 2. 持久卷（Persistent Volumes）
+独立于 Pod 生命周期，数据持久化保留。
+
+##### 本地存储（Local Storage）
+- **[hostPath](https://k8s.io/zh-cn/docs/concepts/storage/volumes/#hostpath)**  
+  - **用途**：访问节点本地文件系统（慎用于生产环境）。  
+  - **特点**：依赖节点路径，Pod 调度需绑定节点。
+- **[local](https://k8s.io/zh-cn/docs/concepts/storage/volumes/#local)**  
+  - **用途**：持久化数据存储到节点本地磁盘。  
+  - **特点**：需手动清理数据，适合 有状态应用。
+
+##### 网络存储（Network Storage）
+- **[NFS](https://k8s.io/zh-cn/docs/concepts/storage/volumes/#nfs)**  
+  - **用途**：共享网络文件系统。  
+  - **特点**：支持多 Pod 同时读写。
+- **分布式存储（Ceph）**  
+  - **[cephfs](https://k8s.io/zh-cn/docs/concepts/storage/volumes/#cephfs)**  
+    - **用途**：Ceph 分布式文件存储。  
+  - **[rbd](https://k8s.io/zh-cn/docs/concepts/storage/volumes/#rbd)**  
+    - **用途**：Ceph 块存储，适合高性能场景。
+
+#### 3. 投射卷（Projected Volumes）
+将多个卷源映射到同一目录，用于向 Pod 注入数据。
+
+- **[projected](https://k8s.io/zh-cn/docs/concepts/storage/projected-volumes/)**  
+  - **支持类型**：  
+    - [configMap](https://k8s.io/zh-cn/docs/concepts/storage/volumes/#configmap)：注入配置文件。  
+    - [secret](https://k8s.io/zh-cn/docs/concepts/storage/volumes/#secret)：注入敏感数据（如密码）。  
+    - [downwardAPI](https://k8s.io/zh-cn/docs/concepts/storage/volumes/#downwardapi)：注入 Pod 自身元数据。  
+  - **特点**：数据动态更新，卷内容自动同步。
+  
+  
 
 #### 后端存储
 
@@ -1442,17 +1529,17 @@ spec:
 
 每种存储都对应一个**存储类（StorageClass）** ，存储类 用来 创建和管理持久卷，是集群与存储服务之间的桥梁。
 
-管理员创建持久卷(**PV**)时，通过设置不同的**StorageClass**来创建不同类型的持久卷。
+管理员创建持久卷(**PV**)时，通过设置不同的**StorageClass**来创建不同类型的PV。
 
 ![image.png](https://cdn.nlark.com/yuque/0/2022/png/28915315/1666320617840-eeb42675-6e6d-4306-910a-080017b7975b.png?x-oss-process=image%2Fformat%2Cwebp%2Fresize%2Cw_1406%2Climit_0)
 
 参考文档：
 
-https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/
+https://k8s.io/zh-cn/docs/concepts/storage/volumes/
 
-https://kubernetes.io/zh-cn/docs/concepts/storage/ephemeral-volumes/
+https://k8s.io/zh-cn/docs/concepts/storage/ephemeral-volumes/
 
-https://kubernetes.io/zh-cn/docs/tasks/configure-pod-container/configure-volume-storage/
+https://k8s.io/zh-cn/docs/tasks/configure-pod-container/configure-volume-storage/
 
 
 
@@ -1461,49 +1548,21 @@ https://kubernetes.io/zh-cn/docs/tasks/configure-pod-container/configure-volume-
 总用量 0
 lrwxrwxrwx 1 root root 16 2月   7 19:58 mysql.cnf -> ..data/mysql.cnf
 [root@k8s-worker2 conf-volume]# pwd
-/var/lib/kubelet/pods/539cd2e5-e4cf-4019-b518-feed135182d1/volumes/kubernetes.io~configmap/conf-volume
+/var/lib/kubelet/pods/539cd2e5-e4cf-4019-b518-feed135182d1/volumes/k8s.io~configmap/conf-volume
 删除pod时539cd2e5目录会删除
 ```
 
 
 
-Ephemeral Volume
-
-与 Pod 一起创建和删除，生命周期与 Pod 相同
-
-[emptyDir](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#emptydir) - 初始内容为空的本地临时目录
-
-[configMap](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#configmap) - 为Pod注入配置文件
-
-[secret](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#secret) - 为Pod注入加密数据
-
 
 
 ## 持久卷(PV-Persistent Volume)与持久卷声明(PVC-Persistent Volume Claim)
-
-删除Pod后，PV不会被删除
-
-本地存储
-
-​	[hostPath](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#hostpath) - 节点主机上的目录或文件(仅供单节点测试使用；多节点集群请用 local 卷代替)
-
-​	[local](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#local) - 节点上挂载的本地存储设备(不支持动态创建卷)
-
-网络存储
-
-​	[NFS](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#nfs) - 网络文件系统 (NFS) 
-
-分布式存储	
-
-​	Ceph([cephfs](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#cephfs)文件存储、[rbd](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#rbd)块存储)
-
-
 
 PV PVC
 
 PV是 集群中的一块存储。可以理解为一块虚拟硬盘。
 
-PV由管理员事先创建， 或 使用[存储类（Storage Class）](https://kubernetes.io/zh-cn/docs/concepts/storage/storage-classes/)根据用户请求来动态创建。 
+PV由管理员事先创建， 或 使用[存储类（Storage Class）](https://k8s.io/zh-cn/docs/concepts/storage/storage-classes/)根据用户请求来动态创建。 
 
 PV 属于集群的公共资源，并不属于某个namespace; 
 
@@ -1513,7 +1572,7 @@ PVC 表达的是 用户对存储的请求。
 
 PVC 类似 申请单，它更贴近云服务的使用场景，使用资源先申请，便于统计和计费。
 
-Pod 将 PVC 当做Volume来使用，PVC 可以请求指定容量的存储空间和[访问模式](https://kubernetes.io/zh-cn/docs/concepts/storage/persistent-volumes/#access-modes) 。PVC对象是带有namespace的。
+Pod 将 PVC 当做Volume来使用，PVC 可以请求指定容量的存储空间和[访问模式](https://k8s.io/zh-cn/docs/concepts/storage/persistent-volumes/#access-modes) 。PVC对象是带有namespace的。
 
 
 
@@ -1521,13 +1580,23 @@ Pod 将 PVC 当做Volume来使用，PVC 可以请求指定容量的存储空间�
 
 
 
+Types of Persistent Volumes
+PersistentVolume types are implemented as plugins. Kubernetes currently supports the following plugins:
+
+- csi - Container Storage Interface (CSI)
+- fc - Fibre Channel (FC) storage
+- hostPath - HostPath volume (for single node testing only; WILL NOT WORK in a multi-node cluster; consider using local volume instead)
+- iscsi - iSCSI (SCSI over IP) storage
+- local - local storage devices mounted on nodes.
+- nfs - Network File System (NFS) storage
+
 创建PV 
 
-创建PV是服务端的行为，通常 集群管理员提前创建一些常用规格的PV以备使用。
+创建PV是服务端的行为，通常 集群管理员 提前创建一些常用规格的PV以备使用。
 
 hostPath仅供单节点测试使用，当Pod被重新创建时，可能会被调度到与原先不同的节点上，导致新的Pod没有数据。
 
-多节点集群使用本地存储，可以使用local卷
+多节点集群使用本地存储，可以使用local卷 ref:https://kubernetes.io/docs/concepts/storage/volumes/#local
 
 **创建local类型的PV，需要先创建存储类(StorageClass)**。
 
@@ -1537,8 +1606,8 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: sc-mysql
-provisioner: kubernetes.io/no-provisioner
-volumeBindingMode: Immediate
+provisioner: k8s.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -1558,7 +1627,7 @@ spec:
     required:
       nodeSelectorTerms:
       - matchExpressions:
-        - key: kubernetes.io/hostname
+        - key: k8s.io/hostname
           operator: In
           values:
           - worker1
@@ -1587,7 +1656,7 @@ spec:
 mysql5.7-pod.yml
 
 ```yml
-mkdir /data/kubernetes/mysql -p
+mkdir /data/k8s/mysql -p
 vim mysql-pod.yml
 
 apiVersion: v1
@@ -1610,7 +1679,7 @@ spec:
     - name: data-volume
       hostPath:
         # 宿主机上目录位置
-        path: /data/kubernetes/mysql/data
+        path: /data/k8s/mysql/data
         type: DirectoryOrCreate
 ```
 
@@ -1619,7 +1688,7 @@ spec:
 #### **一、核心概念与价值**
 
 1. **基本定义**
-   StorageClass 是 Kubernetes 中定义存储卷动态供给规则的 API 对象，通过声明 provisioner 和参数模板，实现按需自动创建 PV。
+   StorageClass 是 k8s 中定义存储卷 动态供给规则的 API 对象，通过声明 provisioner 和 参数模板，实现按需自动创建 PV。
 2. **核心价值**
    - **运维自动化**：无需手动预创建 PV，解决大规模集群中 PVC 频繁申请存储时的运维负担
    - **存储分类管理**：支持定义 SSD/HDD、高性能 / 普通等不同存储类型
@@ -1747,7 +1816,7 @@ spec:
 2. **默认存储类配置**
 
    ```bash
-   kubectl patch storageclass nfs-storage -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+   kubectl patch storageclass nfs-storage -p '{"metadata": {"annotations":{"storageclass.k8s.io/is-default-class":"true"}}}'
    ```
 
 3. **监控与告警**
@@ -1755,7 +1824,7 @@ spec:
    ```yaml
    # Prometheus 监控规则示例
    - alert: StorageClassProvisionFail
-     expr: kube_persistentvolumeclaim_annotations{annotation_storage_kubernetes_io_failure-domain!=~".*"} > 0
+     expr: kube_persistentvolumeclaim_annotations{annotation_storage_k8s_io_failure-domain!=~".*"} > 0
      for: 5m
      labels:
        severity: critical
@@ -1792,10 +1861,16 @@ spec:
 
 #### **六、版本兼容性说明**
 
-| Kubernetes 版本 | 推荐 Provisioner 版本                  | 注意事项                  |
-| --------------- | -------------------------------------- | ------------------------- |
-| 1.20+           | nfs-subdir-external-provisioner:v4.0.2 | 需启用 CSIDriver 特性门控 |
-| 1.18-1.19       | nfs-subdir-external-provisioner:v3.0.0 | 需配置额外的 mountOptions |
+| k8s 版本  | 推荐 Provisioner 版本                  | 注意事项                  |
+| --------- | -------------------------------------- | ------------------------- |
+| 1.20+     | nfs-subdir-external-provisioner:v4.0.2 | 需启用 CSIDriver 特性门控 |
+| 1.18-1.19 | nfs-subdir-external-provisioner:v3.0.0 | 需配置额外的 mountOptions |
+
+
+
+
+
+
 
 
 
@@ -1812,7 +1887,7 @@ spec:
 
 Docker中，一般通过 绑定挂载 的方式将 配置文件 挂载到 容器里。 
 
-Kubernetes集群中，容器可能被调度到任意节点，配置文件需要能在 集群中任意节点上 访问、分发和更新。
+k8s集群中，容器可能被调度到任意节点，配置文件需要能在 集群中任意节点上 访问、分发和更新。
 
 
 
@@ -1822,7 +1897,7 @@ ConfigMap 在 键值对数据库(etcd)中保存非加密数据。**一般用来�
 
 ConfigMap 可用作 环境变量、命令行参数或者存储卷。
 
-ConfigMap 将 环境配置信息 与 [容器镜像](https://kubernetes.io/zh-cn/docs/reference/glossary/?all=true#term-image) 解耦，便于配置的修改。
+ConfigMap 将 环境配置信息 与 [容器镜像](https://k8s.io/zh-cn/docs/reference/glossary/?all=true#term-image) 解耦，便于配置的修改。
 
 ConfigMap 在设计上不是用来保存大量数据的。保存的数据不可超过 1 MiB。超出此限制，需考虑 挂载存储卷 或者 访问文件存储服务。
 
@@ -1837,9 +1912,9 @@ data:
   DB_URL: "http://DB_ADDRESS_DEV"
 ```
 
-●[ConfigMap配置示例](https://kubernetes.io/docs/concepts/configuration/configmap/#configmaps-and-pods)
+●[ConfigMap配置示例](https://k8s.io/docs/concepts/configuration/configmap/#configmaps-and-pods)
 
-●[Pod中使用ConfigMap](https://kubernetes.io/docs/concepts/configuration/configmap/#using-configmaps-as-files-from-a-pod)
+●[Pod中使用ConfigMap](https://k8s.io/docs/concepts/configuration/configmap/#using-configmaps-as-files-from-a-pod)
 
 ```yml
 apiVersion: v1
@@ -1868,7 +1943,7 @@ spec:
     - name: data-volume
       hostPath:
         # directory location on host
-        path: /data/kubernetes/mysql/data
+        path: /data/k8s/mysql/data
         # this field is optional
         type: DirectoryOrCreate
 ---
@@ -1908,8 +1983,8 @@ Secret 可以用作 环境变量、命令行参数或者存储卷文件。
 
 Secret用法
 
-- [Secret配置示例](https://kubernetes.io/zh-cn/docs/concepts/configuration/secret/#use-case)
-- [将Secret用作环境变量](https://kubernetes.io/zh-cn/docs/concepts/configuration/secret/#using-secrets-as-environment-variables)
+- [Secret配置示例](https://k8s.io/zh-cn/docs/concepts/configuration/secret/#use-case)
+- [将Secret用作环境变量](https://k8s.io/zh-cn/docs/concepts/configuration/secret/#using-secrets-as-environment-variables)
 
 ```yml
 echo -n 'root' | base64
@@ -1951,7 +2026,7 @@ spec:
         name: mysql-config
     - name: data-volume
       hostPath:     
-        path: /data/kubernetes/mysql/data
+        path: /data/k8s/mysql/data
         type: DirectoryOrCreate
 ---
 apiVersion: v1
@@ -1980,17 +2055,17 @@ data:
 
 # helm
 
-package manager for Kubernetes, like yum 
+package manager for k8s, like yum 
 
 ![image-20240523162326257](k8s-note/image-20240523162326257.png)
 
 | 概念       | 描述                                                         |
 | ---------- | ------------------------------------------------------------ |
-| Chart      | 一个Helm包，其中包含了运行一个应用所需要的镜像、依赖和资源定义等，还可能包含Kubernetes集群中的服务定义，类似Homebrew中的formula、APT的dpkg或者Yum的rpm文件 |
+| Chart      | 一个Helm包，其中包含了运行一个应用所需要的镜像、依赖和资源定义等，还可能包含k8s集群中的服务定义，类似Homebrew中的formula、APT的dpkg或者Yum的rpm文件 |
 | Repository | 存储Helm Charts的地方                                        |
 | Release    | Chart在k8s上运行的一个实例，例如，如果一个MySQL Chart想在服务器上运行两个数据库，可以将这个Chart安装两次，并在每次安装中生成自己的Release |
-| Value      | Helm Chart的参数，用于配置Kubernetes对象                     |
-| Template   | 使用Go模板语言生成Kubernetes对象的定义文件                   |
+| Value      | Helm Chart的参数，用于配置k8s对象                            |
+| Template   | 使用Go模板语言生成k8s对象的定义文件                          |
 
 ![image-20240523162809528](k8s-note/image-20240523162809528.png)
 
@@ -2014,13 +2089,13 @@ source /etc/profiles
 ```sh
 #仓库管理
 #添加仓库 
-helm repo add az-stable http://mirror.azure.cn/kubernetes/charts/
+helm repo add az-stable http://mirror.azure.cn/k8s/charts/
 helm repo add bitnami https://charts.bitnami.com/bitnami
 
 #查看仓库 
 helm repo list
 NAME            URL
-az-stable       http://mirror.azure.cn/kubernetes/charts/
+az-stable       http://mirror.azure.cn/k8s/charts/
 bitnami         https://charts.bitnami.com/bitnami
 
 #更新仓库属性信息
@@ -2048,7 +2123,7 @@ kubectl get pod
 
 -------
 
-Helm 是 Kubernetes 的包管理工具，可以帮助你简化应用的部署和管理。
+Helm 是 k8s 的包管理工具，可以帮助你简化应用的部署和管理。
 
 ### Helm 常用命令及示例
 

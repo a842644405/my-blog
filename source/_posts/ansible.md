@@ -3,12 +3,26 @@ title: ansible
 date: 2023-06-01 15:50:36
 ---
 
-### ansible install
+# Ansible 自动化工具
+
+通过ssh连接远程主机
+
+## 原理图
+
+![image-20250311110817561](ansible/image-20250311110817561.png) 	
+
+**原则**：模块化、可复用、版本控制
+
+
+
+## ansible install
+
+ansible只需要在ansible controller节点（操作机）安装即可，直接通过SSH协议进行远程连接操作。
 
 ```sh
  #安装依赖和ansible
  yum install -y epel-release
- yum install ansible -y
+ yum install -y ansible 
  
  #检查安装是否成功
  ansible --version
@@ -17,18 +31,10 @@ date: 2023-06-01 15:50:36
  ansible localhost -m ping 
 ```
 
-### ansible configuration file
+## ansible configuration file
 
 ```sh
-#修改主配置文件
-vim /etc/ansible/ansible.cfg
-
-#禁用每次执行ansbile命令检查ssh key host （默认值不用修改）
-host_key_checking = False
-#记录日志（默认值不用修改）
-log_path = /var/log/ansible.log
-
-#inventory目录 配置被管理的主机
+#inventory目录 配置被管理的主机 以group为单位
 vim /etc/ansible/hosts
 ## [webservers]
 ## alpha.example.org
@@ -38,17 +44,25 @@ vim /etc/ansible/hosts
 [test] #test group
 192.168.101.11
 192.168.101.12
+
+#修改主配置文件
+vim /etc/ansible/ansible.cfg
+
+#禁用每次执行ansbile命令检查ssh key host （默认值不用修改）
+host_key_checking = False
+#记录日志（默认值不用修改）
+log_path = /var/log/ansible.log
 ```
 
 
 
-### ssh免密登录（推荐）
+## ssh免密登录（推荐）
 
 ```sh
-#ansible master生成密钥对 
+#ansible master上生成密钥对 
 ssh-keygen -t rsa
 ls /root/.ssh
-id_rsa(privite key)  id_rsa.pub
+id_rsa　(privite key)  id_rsa.pub
 
 #发送公钥到远程主机
 ssh-copy-id -i /root/.ssh/id_rsa.pub root@192.168.101.11
@@ -69,21 +83,21 @@ maya-001-129 ansible_ssh_host="192.168.14.129" ansible_ssh_user="root" ansible_s
 mem1 ansible_ssh_host="192.168.14.130"ansible_ssh_user="root" ansible_ssh_pass="root"
 mem2 ansible_ssh_host="192.168.14.131" ansible_ssh_user="root" ansible_ssh_pass="root"
 
-#远端机器ssh的端口为var时，需多加一条配置
-ansible_ssh_port=var
+#远端机器ssh的端口为port_mun时，需多加一条配置
+ansible_ssh_port=port_mun
 ```
 
 
 
-### ad-hoc模式（命令行模式）
+## ad-hoc模式（命令行模式）
 
 #### **command/shell** module
 
 ```sh
+ansible ip|group -m <module> -a '<module-options>'  
+-a argument 参数   
 ansible test -m command -a 'free -mh'
 ansible test -m command -a 'ntpdate -u ntp.aliyun.com'
-ansible test -m command -a 'date'
-ansible test -m shell   -a 'df -h'
 #执行远程主机的sh
 ansible test -m shell -a 'sh /root/a.sh'
 ```
@@ -197,13 +211,13 @@ package
 
 
 
-### playbook模式（）
+### playbook模式
 
 
 playbook是一个yml文件，由play和task两部分组成。
 
-play:定义要操作的 主机 或者 主机组
-task:定义 对 主机或主机组 执行的任务，可以是一个任务，也可以是多个任务（模块)
+play: 定义 被操作的 主机 或 主机组
+task: 定义 对 主机或主机组 执行的任务，可以是一个任务，也可以是多个任务（模块)
 
 playbook由一个或多个模块组成的，使用多个不同的模块，共同完成一件事情。
 
@@ -249,7 +263,12 @@ ansible-playbook --syntax-check nginx-install.yaml
 
 ---
 
+
+
+### 经典案例
+
 环境准备
+
 服务器列表：
 前端服务器：web1.example.com, web2.example.com
 后端服务器：api1.example.com, api2.example.com
@@ -333,6 +352,7 @@ setup_monitoring.yml
 
 
 主 Playbook 结合所有任务
+
 最后，在主playbook.yml 中添加以下内容，引用所有子 Playbook：
 
 ```
@@ -346,7 +366,7 @@ setup_monitoring.yml
 
 
 
-### 运行 Playbook
+运行 Playbook
 
 在终端中运行以下命令来执行整个 Playbook：
 
