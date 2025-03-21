@@ -223,27 +223,32 @@ spec:
 **流程**
 
 1 k8s API Server 接收请求
-	当你执行 kubectl apply 命令时，kubectl 会将 YAML 文件的内容转换为 JSON 格式，并通过 REST API 发送到 k8s API Server。
+	执行 kubectl apply 命令时，kubectl 将 YAML >> JSON 格式，通过 REST API 发送到 API Server。
 	API Server 验证请求的有效性（如权限检查、资源定义的合法性等）。
 
 2 API Server 处理请求
-	API Server 将接收到的资源对象存储到 etcd 中（etcd 是 k8s 的分布式键值存储系统，用于存储集群的所有状态数据）。
-	API Server 还会通知所有相关的控制器（Controller），告知有一个新的 Pod 被创建。
+
+- 接收 JSON 格式的请求。
+- 将 JSON 数据转换为 Go 结构体。
+- 将 Go 结构体序列化为 Protobuf 格式。
+
+​	API Server 将接收到的资源对象存储到 etcd 中.
+​	API Server 还会通知所有相关的控制器（Controller），告知有一个新的 Pod 被创建。
 3 调度器（Scheduler）选择节点
-	调度器（Scheduler）负责将新创建的 Pod 分配到合适的节点上。
-	调度器会考虑多种因素，包括节点的资源可用性（CPU、内存等）、亲和性和反亲和性规则、污点和容忍等。
+​	调度器（Scheduler）负责将新创建的 Pod 分配到合适的节点上。
+​	调度器会考虑多种因素，包括节点的资源可用性（CPU、内存等）、亲和性和反亲和性规则、污点和容忍等。
 4 Kubelet 拉取镜像并启动容器
-	当调度器决定将 Pod 分配给某个节点后，该节点上的 Kubelet 组件会收到通知。
-		Kubelet 通过cri调用docker从指定的镜像仓库（例如 Docker Hub）拉取 nginx:1.21 镜像。
-		拉取完成后，Kubelet 使用容器运行时（如 containerd 或 Docker）启动容器。
+​	当调度器决定将 Pod 分配给某个节点后，该节点上的 Kubelet 组件会收到通知。
+​		Kubelet 通过cri调用docker从指定的镜像仓库（例如 Docker Hub）拉取 nginx:1.21 镜像。
+​		拉取完成后，Kubelet 使用容器运行时（如 containerd 或 Docker）启动容器。
 5 健康检查和状态更新
-	容器启动后，Kubelet 会定期进行健康检查（如果配置了 Liveness 和 Readiness Probes）。
-	如果一切正常，Pod 的状态会被更新为 Running，并且可以通过 kubectl get pods 查看到。
+​	容器启动后，Kubelet 会定期进行健康检查（如果配置了 Liveness 和 Readiness Probes）。
+​	如果一切正常，Pod 的状态会被更新为 Running，并且可以通过 kubectl get pods 查看到。
 6 访问 Pod
-	如果需要访问这个 Pod，可以通过端口转发或服务（Service）的方式进行访问：
-	使用 kubectl port-forward 命令进行本地端口转发：
-		kubectl port-forward pod/my-pod 8080:80
-	或者创建一个 Service 来暴露 Pod。
+​	如果需要访问这个 Pod，可以通过端口转发或服务（Service）的方式进行访问：
+​	使用 kubectl port-forward 命令进行本地端口转发：
+​		kubectl port-forward pod/my-pod 8080:80
+​	或者创建一个 Service 来暴露 Pod。
 
 ```
 +---------------------+
@@ -297,6 +302,129 @@ spec:
 | Forwarding or       |
 | Service             |
 +---------------------+
+
+当你运行 kubectl apply -f nginx-deployment.yml 命令时，Kubernetes 集群中的多个组件会协同工作来处理这个请求。以下是详细的执行流程，包括各个组件的角色和它们之间的交互。
+
+1. 客户端（kubectl）
+1.1 解析 YAML 文件
+读取文件：kubectl 读取并解析 nginx-deployment.yml 文件。
+验证格式：检查文件的格式是否正确，并确认其定义了一个有效的 Kubernetes 资源对象（例如 Deployment）。
+1.2 发送请求到 API Server
+序列化为 JSON：将 YAML 文件的内容转换为 JSON 格式。
+构造 HTTP 请求：构建一个 HTTP POST 请求，包含资源对象的 JSON 数据。
+发送请求：通过 HTTPS 协议将请求发送到 Kubernetes API Server。
+2. API Server
+2.1 接收请求
+身份验证：API Server 首先对请求进行身份验证，确保请求来自合法用户或服务账户。
+授权检查：检查该用户是否有权限执行 apply 操作。这通常涉及到 RBAC（基于角色的访问控制）策略。
+2.2 解析和验证资源对象
+反序列化：将接收到的 JSON 数据反序列化为 Go 结构体。
+模式验证：验证资源对象的结构是否符合 Kubernetes 的 API 规范。例如，检查 apiVersion, kind, metadata, spec 等字段是否存在且格式正确。
+准入控制：API Server 还会调用一系列的准入控制器（Admission Controllers），这些控制器可以对资源对象进行进一步的修改或验证。常见的准入控制器包括：
+NamespaceLifecycle：确保命名空间存在且未被终止。
+LimitRanger：确保资源请求和限制在允许范围内。
+ResourceQuota：检查是否超过了命名空间的资源配额。
+MutatingAdmissionWebhook 和 ValidatingAdmissionWebhook：允许自定义 Webhook 对资源对象进行修改或验证。
+2.3 存储资源对象
+存储到 etcd：如果所有验证都通过，API Server 将资源对象序列化为 Protobuf 格式，并将其存储到 etcd 中。
+生成事件：API Server 会生成相应的事件（Events），记录资源对象的状态变化。
+3. Controller Manager
+3.1 监听资源变化
+控制器循环：Controller Manager 包含多个控制器（Controllers），每个控制器负责管理特定类型的资源对象。例如，Deployment 控制器负责管理 Deployment 资源。
+监听 API Server：控制器通过与 API Server 的 watch 机制监听资源的变化。当一个新的 Deployment 被创建时，Deployment 控制器会收到通知。
+3.2 处理资源对象
+创建 ReplicaSet：对于 Deployment 资源，控制器会根据 spec.replicas 字段创建相应的 ReplicaSet 资源。
+更新状态：控制器会更新 Deployment 资源的状态字段（如 observedGeneration, replicas, updatedReplicas, readyReplicas 等），以反映当前的状态。
+4. Scheduler
+4.1 监听 Pod 创建
+监听 API Server：Scheduler 通过与 API Server 的 watch 机制监听未调度的 Pod 资源（即那些 spec.nodeName 字段为空的 Pod）。
+选择节点：当 Scheduler 收到新的 Pod 创建请求时，它会根据一系列调度算法选择一个合适的节点来运行该 Pod。这些算法包括：
+预选（Predicates）：过滤掉不满足条件的节点（如资源不足、标签不符合等）。
+优选（Priorities）：为剩余的节点打分，选择得分最高的节点。
+4.2 绑定 Pod 到节点
+绑定操作：一旦选择了合适的节点，Scheduler 会向 API Server 发出请求，将 Pod 的 spec.nodeName 字段设置为所选节点的名称。这样就完成了 Pod 的调度过程。
+5. Kubelet
+5.1 监听节点上的 Pod 变化
+监听 API Server：Kubelet 通过与 API Server 的 watch 机制监听分配给本节点的 Pod 资源。
+启动容器：
+下载镜像：如果需要运行的容器镜像不在本地缓存中，Kubelet 会从指定的镜像仓库下载镜像。
+创建容器：使用容器运行时（如 containerd 或 Docker）创建并启动容器。
+健康检查：Kubelet 会定期执行存活探针（Liveness Probes）和就绪探针（Readiness Probes），以确保容器处于健康状态。
+6. 网络插件（CNI）
+6.1 配置 Pod 网络
+分配 IP 地址：网络插件负责为新创建的 Pod 分配 IP 地址，并配置网络接口。
+网络隔离：实现 Pod 之间的网络隔离和通信规则。
+7. 监控和日志收集
+7.1 日志收集
+容器日志：容器运行时会将容器的标准输出和标准错误流重定向到文件系统中的某个位置。Kubelet 或专门的日志收集工具（如 Fluentd 或 Filebeat）会定期收集这些日志并发送到集中式的日志管理系统（如 Elasticsearch 或 Loki）。
+7.2 监控
+Metrics Server：集群中的 Metrics Server 会定期从 Kubelet 收集节点和 Pod 的性能指标（如 CPU 使用率、内存使用量等），并将这些数据暴露给 API Server。
+Prometheus/Grafana：许多集群会使用 Prometheus 和 Grafana 来收集和可视化这些性能指标，以便于监控和报警。
+示例流程
+假设你有一个简单的 nginx-deployment.yml 文件：
+
+Yaml
+深色版本
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80
+以下是详细的执行流程：
+
+kubectl：
+读取并解析 nginx-deployment.yml 文件。
+将 YAML 文件转换为 JSON 格式。
+构造 HTTP POST 请求，将 JSON 数据发送到 API Server。
+API Server：
+对请求进行身份验证和授权。
+验证资源对象的格式和内容。
+调用准入控制器进行进一步的验证和修改。
+将资源对象序列化为 Protobuf 格式并存储到 etcd 中。
+Controller Manager：
+Deployment 控制器监听到新的 Deployment 资源。
+根据 spec.replicas 字段创建相应的 ReplicaSet 资源。
+更新 Deployment 资源的状态字段。
+Scheduler：
+监听到新的 Pod 资源（由 ReplicaSet 创建）。
+选择合适的节点来运行这些 Pod。
+向 API Server 发出请求，将 Pod 绑定到选定的节点。
+Kubelet：
+监听到分配给本节点的 Pod 资源。
+下载所需的容器镜像并启动容器。
+定期执行健康检查，确保容器处于健康状态。
+网络插件（CNI）：
+为新创建的 Pod 分配 IP 地址。
+配置网络接口，确保 Pod 之间的网络通信正常。
+监控和日志收集：
+收集容器的日志并发送到集中式的日志管理系统。
+收集性能指标并暴露给 API Server，供监控工具使用。
+总结
+kubectl apply -f nginx-deployment.yml 的执行流程涉及多个 Kubernetes 组件的协同工作：
+
+kubectl：负责读取和解析 YAML 文件，并将其发送到 API Server。
+API Server：负责身份验证、授权、验证资源对象，并将其存储到 etcd 中。
+Controller Manager：监听资源变化，创建相应的子资源（如 ReplicaSet）并更新状态。
+Scheduler：选择合适的节点来运行 Pod，并将 Pod 绑定到节点。
+Kubelet：负责在节点上启动容器，并执行健康检查。
+网络插件（CNI）：配置 Pod 的网络，确保网络通信正常。
+监控和日志收集：收集日志和性能指标，供后续分析和监控使用。
 ```
 
 
@@ -313,7 +441,7 @@ spec:
 
 跨主机免密码认证
 
-```
+```sh
 生成秘钥对
 ssh-keygen -t rsa 
 
@@ -826,7 +954,7 @@ Service_type：
 
 2种方式 命令行 yml
 
-```
+```sh
 # port是service访问端口,target-port是Pod端口 二者通常是一样的 默认--type=ClusterIP
 kubectl expose deployment/nginx-deployment \
 --name=nginx-service --type=ClusterIP --port=8080 --target-port=80
