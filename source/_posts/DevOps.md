@@ -17,7 +17,7 @@ title: DevOps
 
 - TEST：成功构建项目后，需要测试代码是否存在BUG或错误。
 
-- DEPLOY：代码经过手动测试和自动化测试后，认定代码已经准备好部署 并且交给 运维团队。
+- DEPLOY：代码经过手动测试和自动化测试后，认定代码可部署后交给运维团队。
 
 - OPERATE：运维团队将代码 部署到 生产环境中。
 
@@ -77,6 +77,8 @@ https://hub.docker.com/r/gitlab/gitlab-ce
   cd /usr/local/docker/gitlab_docker
   vim docker-compose.yml 
   ```
+
+  
 
   ```yml
   version: '3.1'
@@ -294,7 +296,7 @@ Jenkins最强大的就在于**插件**，官方提供了大量的插件库，来
 CI/CD可以理解为：
 
 - CI过程 通过Jenkins将代码拉取、构建、制作镜像交给**测试人员测试**。
-  - 持续集成：让软件代码可以持续的集成到主干上，并自动构建和测试。
+  - CI：让软件代码可以持续的集成到主干上，并自动构建和测试。
 - CD过程 通过Jenkins将打好标签的发行版本代码拉取、构建、制作镜像 交给 **运维人员部署**。
   - 持续交付：将代码的改动 自动化地构建、测试、打包，并将打包好的可部署文件交到一个**人工审核**的阶段，由人工决定是否将其部署到生产环境中。
   - 持续部署：将代码的改动 自动化地构建、测试、打包，并自动将打包好的可部署文件部署到生产环境中，**无需人工干预**。
@@ -345,24 +347,17 @@ CI/CD可以理解为：
   sed -i 's#https://updates.jenkins.io/download#https://mirrors.tuna.tsinghua.edu.cn/jenkins#g' default.json
   sed -i 's#http://www.google.com#https://www.baidu.com#g' default.json
   
-  #将jdk8和maven添加到jenkins插件目录中（后续需要挂载的目录）
-  cp -r /usr/local/jdk /usr/local/docker/jenkins18080
-  cp -r /usr/local/maven /usr/local/docker/jenkins18080
-  
   ```
-
   
-
+  
+  
 - 编写docker-compose.yml
 
   ```
   cd /usr/local/docker
   mkdir /usr/local/docker/jenkins18080
-  mv /usr/bin/local/jdk /usr/local/docker/jenkins18080
-  mv /usr/bin/local/maven /usr/local/docker/jenkins18080
-  
   ```
-
+  
 - ```yml
   version: "3.1"
   services:
@@ -396,21 +391,17 @@ CI/CD可以理解为：
   ```sh
   # 修改数据卷中的hudson.model.UpdateCenter.xml文件
   vim hudson.model.UpdateCenter.xml
-  # 将下载地址替换为http://mirror.esuni.jp/jenkins/updates/update-center.json
-  <?xml version='1.1' encoding='UTF-8'?>
-  <sites>
-    <site>
-      <id>default</id>
-      <url>http://mirror.esuni.jp/jenkins/updates/update-center.json</url>
-    </site>
-  </sites>
-  
-  # 清华大学的插件源 https://mirrors.tuna.tsinghua.edu.cn/jenkins/updates/update-center.json
-  sed 's/被替换/替换/g'
-  
+  # 将下载地址替换为http://mirror.esuni.jp/jenkins/updates/update-center.json或https://mirrors.huaweicloud.com/jenkins/updates/update-center.json
+      <url>https://mirrors.huaweicloud.com/jenkins/updates/update-center.json</url>
   ```
   
 - 再次重启Jenkins容器，访问Jenkins（需要稍微等会）
+
+- ```
+  docker compose -f
+  ```
+
+  
 
   |                         Jenkins首页                          |
   | :----------------------------------------------------------: |
@@ -420,7 +411,7 @@ CI/CD可以理解为：
 - 查看密码登录Jenkins，并登录下载插件
 
   ```sh
-  docker exec -it jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+  docker exec -it jenkins18080 cat /var/jenkins_home/secrets/initialAdminPassword
   ```
 
   
@@ -441,6 +432,12 @@ CI/CD可以理解为：
 
 - 下载完毕设置信息进入首页（可能会出现下载失败的插件）
 
+  ```
+  root
+  root
+  192.168.101.103:18080
+  ```
+  
   |                                                              |
   | ------------------------------------------------------------ |
   | ![image-20211124211635550](DevOps/image-20211124211635550.png) |
@@ -508,9 +505,19 @@ Jenkins需要将Gitlab上存放的源码 存储到Jenkins服务所在磁盘的�
 
 - 移动JDK、Maven目录至jenkins18080，或通过 数据卷映射到Jenkins容器内部。
 
-  ![image-20230630145124371](C:/Users/84264/AppData/Roaming/Typora/draftsRecover/DevOps/image-20230630145124371.png)
+- ```
+  #将jdk8和maven添加到jenkins插件目录中（后续需要挂载的目录）
+  cp -r /usr/local/jdk8 /usr/local/docker/jenkins18080
+  cp -r /usr/local/maven /usr/local/docker/jenkins18080
+  ```
+
+  
 
 - Jenkins配置JDK&Maven并保存
+
+  /var/jenkins_home/jdk8
+
+  /var/jenkins_home/maven
 
   |                                                              |
   | ------------------------------------------------------------ |
@@ -532,19 +539,20 @@ Jenkins需要将Gitlab上存放的源码 存储到Jenkins服务所在磁盘的�
   | ![image-20211125205725948](DevOps/image-20211125205725948.png) |
 
 
+
 ##### 5.3.3 配置Publish发布&远程操作
 
 jar包构建好之后，就可以根据情况发布到测试或生产环境，这里需要用到之前下载好的插件Publish Over SSH。
 
 - 配置Publish Over SSH连接测试、生产环境服务器
 
-  test-111
+  test-82
 
-  192.168.101.111
+  192.168.101.82
 
   root
 
-  /usr/local/test-111
+  /usr/local/test-82
 
   |                     Publish Over SSH配置                     |
   | :----------------------------------------------------------: |
@@ -565,14 +573,14 @@ jar包构建好之后，就可以根据情况发布到测试或生产环境，�
   | ![image-20211125210755556](DevOps/image-20211125210755556.png) |
   | ![image-20211125210826057](DevOps/image-20211125210826057.png) |
 
-
+nohup java -jar /usr/local/projects/target/test.jar &> /usr/local/projects/test.log &
 
 
 ### 六、CI、CD入门操作
 
-基于Jenkins拉取GitLab的SpringBoot代码进行构建                        发布到 测试环境 实现 持续集成
+基于Jenkins拉取GitLab的SpringBoot代码进行构建 发布到 测试环境 实现 **持续集成**
 
-基于Jenkins拉取GitLab**指定发行版本**的SpringBoot代码进行构建 发布到 生产环境 实现 持续部署
+基于Jenkins拉取GitLab**指定发行版本**的SpringBoot代码进行构建 发布到 生产环境 实现 **持续部署**
 
 #### 6.1 持续集成
 
@@ -584,27 +592,27 @@ jar包构建好之后，就可以根据情况发布到测试或生产环境，�
 
 - |                        构建自定义镜像                        |
   | :----------------------------------------------------------: |
-  | ![image-20211126161304485](DevOps/image-20211126161304485.png) |
+  | ![image-20250408145941264](DevOps/image-20250408145941264.png) |
 
 - 添加docker-compose.yml文件
 
   |                    加载自定义镜像启动容器                    |
   | :----------------------------------------------------------: |
-  | ![image-20211126161331991](DevOps/image-20211126161331991.png) |
+  | ![image-20250408150014396](DevOps/image-20250408150014396.png) |
 
 - 追加Jenkins构建后操作脚本命令
 
   ```
-  source files目录是/var/jenkins_home/mytest(当前项目目录)
+  source files目录是/var/jenkins_home/当前项目目录
   
-  传输到在全局配置中设置的publish over ssh配置的服务器目录/usr/local/test-111也就是下图的/usr/local/test/docker
+  传输到 在全局配置中设置的publish over ssh配置的服务器目录/usr/local/projects 
   ```
 
   
 
   |                   构建后发布并执行脚本命令                   |
   | :----------------------------------------------------------: |
-  | ![image-20211126161408514](DevOps/image-20211126161408514.png) |
+  | ![image-20250408150136120](DevOps/image-20250408150136120.png) |
 
 - 发布到GitLab后由Jenkins立即构建并托送到目标服务器
 
@@ -617,7 +625,9 @@ jar包构建好之后，就可以根据情况发布到测试或生产环境，�
   |                   查看目标服务器并测试接口                   |
   | :----------------------------------------------------------: |
   | ![image-20211126161504715](DevOps/image-20211126161504715.png) |
-  | ![image-20211126161509411](DevOps/image-20211126161509411.png) |
+  | ![image-20250408150318775](DevOps/image-20250408150318775.png) |
+
+
 
 #### 6.2 持续交付、部署
 
@@ -677,55 +687,68 @@ Sonar Qube可以与多种软件整合进行代码扫描，比如Maven，Gradle�
 
 Sonar Qube在7.9版本中已经放弃了对MySQL的支持，并且建议在商业环境中采用PostgreSQL，那么安装Sonar Qube时需要依赖PostgreSQL。
 
-并且这里会安装Sonar Qube的长期支持版本[8.9]()
+所以安装Sonar Qube的长期支持版本[8.9]()
 
 - 拉取镜像
 
   ```sh
-  docker pull postgres
+  docker pull postgres:12
   docker pull sonarqube:8.9.3-community
   ```
 
 - 编写docker-compoe.yml
 
   ```yml
-  version: "3.1"
+  version: '3'
   services:
-    db:
-      image: postgres
-      container_name: db
-      ports:
-        - 5432:5432
-      networks:
-        - sonarnet
-      environment:
-        POSTGRES_USER: sonar
-        POSTGRES_PASSWORD: sonar
     sonarqube:
+      container_name: sonarqube8.9.3
       image: sonarqube:8.9.3-community
-      container_name: sonarqube
-      depends_on:
-        - db
       ports:
-        - "9000:9000"
+        - 9000:9000
+        - 9092:9092 # 可选，如果需要使用消息队列特性
       networks:
         - sonarnet
       environment:
-        SONARQUBE_JDBC_URL: jdbc:postgresql://db:5432/sonar
-        SONARQUBE_JDBC_USERNAME: sonar
-        SONARQUBE_JDBC_PASSWORD: sonar
+        - SONAR_JDBC_URL=jdbc:postgresql://db:5432/sonar # 修改为实际的数据库连接信息
+        - SONAR_JDBC_USERNAME=sonar # 修改为实际的数据库用户名
+        - SONAR_JDBC_PASSWORD=sonar # 修改为实际的数据库密码
+      volumes:
+        - sonardata:/opt/sonarqube/data
+        - sonarlogs:/opt/sonarqube/logs
+        - sonarextensions:/opt/sonarqube/extensions
+  
+    db:
+      container_name: postgresSQL
+      image: postgres:12
+      networks:
+        - sonarnet
+      environment:
+        - POSTGRES_USER=sonar # 修改为实际的数据库用户名
+        - POSTGRES_PASSWORD=sonar # 修改为实际的数据库密码
+        - POSTGRES_DB=sonar
+      volumes:
+        - pgdata:/var/lib/postgresql/data
+  
   networks:
     sonarnet:
-      driver: bridge
+  
+  volumes:
+    sonardata:
+    sonarlogs:
+    sonarextensions:
+    pgdata:
   ```
 
 - 启动容器
 
   ```
-  docker-compose up -d
+  docker compose up -d
   ```
 
 - 需要设置sysctl.conf文件信息
+
+  vim /etc/sysctl.conf
 
   |                     设置vm.max_map_count                     |
   | :----------------------------------------------------------: |
@@ -735,6 +758,9 @@ Sonar Qube在7.9版本中已经放弃了对MySQL的支持，并且建议在商�
   并执行命令刷新
 
   ```
+  vim /etc/sysctl.conf
+  vm.max_map_count = 262144
+  
   sysctl -p
   ```
 
@@ -837,7 +863,9 @@ Sonar Qube的使用方式很多，Maven可以整合，也可以采用sonar-scann
   - 解压压缩包
 
     ```sh
-    unzip sonar-scanner-cli/sonar-scanner-cli-4.6.0.2311-linux.zip
+    wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.1.2450-linux.zip
+    unzip sonar-scanner-cli-4.6.1.2450-linux.zip
+    mv sonar-scanner-4.6.1.2450-linux sonar-scanner
     ```
 
   - 配置sonarQube服务端地址，修改conf下的sonar-scanner.properties
@@ -849,8 +877,9 @@ Sonar Qube的使用方式很多，Maven可以整合，也可以采用sonar-scann
 - 执行命令检测代码
 
   ```sh
-  # 在项目所在目录执行以下命令
-  ~/sonar-scanner/bin/sonar-scanner -Dsonar.sources=./ -Dsonar.projectname=demo -Dsonar.projectKey=java -Dsonar.java.binaries=target/
+  # 在项目所在目录test执行以下命令
+  cd test
+  /usr/local/docker/jenkins18080/sonar-scanner/bin/sonar-scanner -Dsonar.login=3c91f13d37da06265d785773d57bb9c35e4156b2 -Dsonar.sources=./ -Dsonar.projectname=test -Dsonar.projectKey=java -Dsonar.java.binaries=target/
   ```
 
   [Ps：主要查看我的sonar-scanner执行命令的位置]()
@@ -867,7 +896,7 @@ Sonar Qube的使用方式很多，Maven可以整合，也可以采用sonar-scann
 
 #### 7.4 Jenkins集成Sonar Qube
 
-Jenkins继承Sonar Qube实现代码扫描需要先下载整合插件
+Jenkins集成Sonar Qube实现代码扫描需要先下载整合插件
 
 ##### 7.4.1 Jenkins安装插件
 
@@ -921,9 +950,17 @@ Jenkins继承Sonar Qube实现代码扫描需要先下载整合插件
 | ![image-20211130160017465](DevOps/image-20211130160017465.png) |
 | ![image-20211130160047648](DevOps/image-20211130160047648.png) |
 
+```
+Failed to create lock in /var/jenkins_home/workspace/test/.scannerwork/.sonar_lock
+解决方法
+chmod 777 -R /usr/local/docker/jenkins18080
+```
 
+![image-20250409141615844](DevOps/image-20250409141615844.png)
 
 ### 八、集成Harbor
+
+![image-20250409155922635](DevOps/image-20250409155922635.png)
 
 #### 8.1 Harbor介绍
 
@@ -971,8 +1008,8 @@ Docker官方提供了**Registry**镜像仓库，但是Registry的功能相对简
   - 首先复制一份harbor.yml配置
 
     ```sh
-    cp  harbor.yml harbor.yml.bak
-    vim harbor.yml
+     cp harbor.yml.tmpl harbor.yml
+     vim harbor.yml
     ```
 
   - 编辑harbor.yml配置文件
@@ -991,7 +1028,7 @@ Docker官方提供了**Registry**镜像仓库，但是Registry的功能相对简
   | :----------------------------------------------------------: |
   | ![image-20211130215941857](DevOps/image-20211130215941857.png) |
 
-- 登录Harbor
+- 登录Harbor 192.168.101.253
 
   |                          登录Harbor                          |
   | :----------------------------------------------------------: |
@@ -1005,7 +1042,7 @@ Docker官方提供了**Registry**镜像仓库，但是Registry的功能相对简
 
 #### 8.3 Harbor使用方式
 
-Harbor作为镜像仓库，主要的交互方式就是将镜像上传到Harbor上，以及从Harbor上下载指定镜像
+将镜像上传到Harbor上，以及从Harbor上下载指定镜像
 
 在传输镜像前，可以先使用Harbor提供的权限管理，将项目设置为私有项目，并对不同用户设置不同角色，从而更方便管理镜像。
 
@@ -1039,11 +1076,18 @@ Harbor作为镜像仓库，主要的交互方式就是将镜像上传到Harbor�
 
 - 修改镜像名称
 
-  名称要求：[harbor地址/项目名/镜像名:版本]()
+  名称要求：
+
+  ```
+  harbor地址+port/项目名/镜像名:版本
+  192.168.101.253:80/repo/test:v4.0.0
+  ```
+
+  
 
   | 修改镜像名称                                                 |
   | ------------------------------------------------------------ |
-  | ![image-20211201221040200](DevOps/image-20211201221040200.png) |
+  | <img src="DevOps/image-20250409162647918.png" alt="image-20250409162647918" style="zoom:80%;" /> |
 
 - 修改daemon.json，支持Docker仓库，并重启Docker
 
@@ -1052,41 +1096,36 @@ Harbor作为镜像仓库，主要的交互方式就是将镜像上传到Harbor�
   ```
 
   ```
-  
+  {
+    "registry-mirrors": ["https://registry.cn-shanghai.aliyuncs.com"],
+    "insecure-registries": ["192.168.101.253:80"]
+  }
+  systemctl restart docker
   ```
 
   
 
-  |               修改daemon.json，支持Docker仓库                |
-  | :----------------------------------------------------------: |
-  | ![image-20211201215931237](DevOps/image-20211201215931237.png) |
-
-- 设置登录仓库信息
+- 设置登录仓库信息并push到harbor
 
   ```sh
-  docker login -u 用户名 -p 密码 Harbor地址
+  # docker login -u 用户名 -p 密码 Harbor地址
   
   docker login -u admin -p Harbor12345 192.168.101.253:80
-  docker tag  e6c6867d5a27 192.168.101.253:80/repo/test:v1.0.0
-  docker push 192.168.101.253:80/repo/test:v1.0.0
+  docker tag  test:v4.0.0 192.168.101.253:80/repo/test:v4.0.0 
+  docker push 192.168.101.253:80/repo/test:v4.0.0
   ```
 
-- 推送镜像到Harbor
+  
 
-  |                       推送镜像到Harbor                       |
-  | :----------------------------------------------------------: |
-  | ![image-20211201221225196](DevOps/image-20211201221225196.png) |
-  | ![image-20211201221300055](DevOps/image-20211201221300055.png) |
 
 ##### 8.3.3 最终目标服务器test-111从vj-253-Harbor拉取镜像
 
-需要先配置[/etc/docker/daemon.json]()文件 配置harbor源
+jenkins从gitlab拉取代码使用Maven打包后，使用docker build构建image上传到harbor，目标服务器从harbor中拉取image，所以jenkins和目标服务器的docker都需访问harbor 
+
+vim /etc/docker/daemon.json
 
 ```sh
-{
-        "registry-mirrors": ["https://pee6w651.mirror.aliyuncs.com"],
-        "insecure-registries": ["192.168.101.253:80"]
-}
+"insecure-registries": ["http://192.168.101.253:80"]
 ```
 
 
@@ -1095,11 +1134,9 @@ Harbor作为镜像仓库，主要的交互方式就是将镜像上传到Harbor�
 docker pull 192.168.101.253:80/repo/test:v1.0.0
 ```
 
-<img src="C:/Users/84264/AppData/Roaming/Typora/draftsRecover/DevOps/image-20230705162011395.png" alt="image-20230705162011395" style="zoom:80%;" />
 
 
-
-##### 8.3.4 Jenkins容器使用宿主机Docker
+##### 8.3.4 Jenkins使用宿主机Docker
 
 构建 和 发布 镜像到harbor 都需用到 docker命令。而在Jenkins容器内部安装Docker官方推荐直接采用宿主机带的Docker即可。
 
@@ -1118,17 +1155,21 @@ docker pull 192.168.101.253:80/repo/test:v1.0.0
   version: "3.1"
   services:
     jenkins:
-      image: jenkins/jenkins:2.346.3-lts-jdk8
+      image: jenkins/jenkins:2.440.2
       container_name: jenkins18080
       restart: always
       ports:
         - 18080:8080
         - 50000:50000
+      environment:
+        - JAVA_OPTS="-Duser.timezone=Asia/Shanghai"
+        - TZ=Asia/Shanghai
       volumes:
         - /usr/local/docker/jenkins18080:/var/jenkins_home
-        - /usr/bin/docker:/usr/bin/docker
         - /var/run/docker.sock:/var/run/docker.sock
         - /etc/docker/daemon.json:/etc/docker/daemon.json
+        - /usr/bin/docker:/usr/bin/docker
+        - /etc/localtime:/etc/localtime:ro  # 挂载宿主机的时区文件
   ```
 
 
@@ -1137,9 +1178,7 @@ docker pull 192.168.101.253:80/repo/test:v1.0.0
 
 删除之前的构建后操作
 
-![image-20230706092229442](C:/Users/84264/AppData/Roaming/Typora/draftsRecover/DevOps/image-20230706092229442.png)
-
-
+<img src="DevOps/image-20250409164732280.png" alt="image-20250409164732280" style="zoom:80%;" />
 
 添加shell
 
@@ -1158,58 +1197,61 @@ docker push 192.168.101.253:80/repo/test:$tag
 
 部署项目需要通过Publish Over SSH插件，让目标服务器执行命令。为了方便一次性实现拉取镜像和启动的命令，推荐采用脚本文件的方式。
 
-添加脚本文件到目标服务器，再通过Publish Over SSH插件让目标服务器执行脚本即可。
+添加脚本文件到目标服务器，再通过Publish Over SSH插件让目标服务器执行脚本。
 
-- 编写脚本文件，添加到目标服务器
+- 编写deploy.sh，添加到目标服务器test-82
 
+  ```
+  cd /usr/local/bin
+  touch deploy.sh
+  chmod a+x deploy.sh
+  vim deploy.sh
+  ```
+  
   ```sh
-  harbor_url=$1
-  harbor_project_name=$2
-  project_name=$3
+  harbor_url=$1 # 192.168.101.253:80
+  harbor_project_name=$2 # repo
+  project_name=$3 # test
   tag=$4
-  port=$5
+  hostPort=$5 # 8888
+  containerPort=$6 # 8080
   
   imageName=$harbor_url/$harbor_project_name/$project_name:$tag
+  
+  echo $(date) >> /usr/local/bin/logs
   
   containerId=`docker ps -a | grep ${project_name} | awk '{print $1}'`
   if [ "$containerId" != "" ] ; then
       docker stop $containerId
       docker rm $containerId
-      echo "Delete Container Success"
+      echo "Delete Container $containerId Success" >> /usr/local/bin/logs
   fi
   
   imageId=`docker images | grep ${project_name} | awk '{print $3}'`
   
   if [ "$imageId" != "" ] ; then
       docker rmi -f $imageId
-      echo "Delete Image Success"
+      echo "Delete Image $imageId Success" >> /usr/local/bin/logs
   fi
   
-  docker login -u DevOps -p P@ssw0rd $harbor_url
-  
+  docker login -u admin -p Harbor12345 $harbor_ur
   docker pull $imageName
+  docker run -d -p $hostPort:$containerPort --name $project_name $imageName
   
-  docker run -d -p $port:$port --name $project_name $imageName
+  echo "run image $imageName success" >> /usr/local/bin/logs
+  ```
   
-  echo "Start Container Success"
-  echo $project_name
-  ```
-
-  并设置权限为可执行
-
-  ```
-  chmod a+x deploy.sh
-  ```
-
-  |                             如图                             |
-  | :----------------------------------------------------------: |
-  | ![image-20211203192047357](DevOps/image-20211203192047357.png) |
+  
 
 ##### 8.3.7 配置构建后操作
 
 |                         执行脚本文件                         |
 | :----------------------------------------------------------: |
-| ![image-20211229155949038](DevOps/image-20211229155949038.png) |
+| ![image-20250410114445604](DevOps/image-20250410114445604.png) |
+
+```
+192.168.101.253:80 repo ${JOB_NAME} $tag  $hostPort $containerPort
+```
 
 
 
@@ -1217,33 +1259,33 @@ docker push 192.168.101.253:80/repo/test:$tag
 
 #### 9.1 Jenkins流水线任务介绍
 
-之前采用Jenkins的自由风格构建的项目，每个步骤流程都要通过不同的方式设置，并且构建过程中整体流程是不可见的，无法确认每个流程花费的时间，并且问题不方便定位问题。
+自由风格构建的项目，每个步骤流程都要通过不同的方式设置，并且构建过程中整体流程是不可见的，无法确认每个流程花费的时间，并且问题不方便定位问题。
 
 Jenkins的Pipeline可以让项目的发布整体流程可视化，明确执行的阶段，可以快速的定位问题。并且整个项目的生命周期可以通过一个Jenkinsfile文件管理，而且Jenkinsfile文件是可以放在项目中维护。
 
-所以Pipeline相对自由风格或者其他的项目风格更容易操作。
+所以Pipeline 相对 自由风格 或者其他的项目风格更容易操作。
+
+
 
 #### 9.2 Jenkins流水线任务
 
 ##### 9.2.1 构建Jenkins流水线任务
 
-- 构建任务
+- 新建任务test-p
 
-  | 构建Jenkins流水线任务                                        |
-  | ------------------------------------------------------------ |
-  | ![image-20211202144429302](DevOps/image-20211202144429302.png) |
+  ![image-20250410145107941](DevOps/image-20250410145107941.png)
+  
+- step生成Groovy脚本
 
-- 生成Groovy脚本
-
-  |                     Hello World脚本生成                      |
+  |                           脚本生成                           |
   | :----------------------------------------------------------: |
-  | ![image-20211202144531749](DevOps/image-20211202144531749.png) |
+  | ![image-20250410150634019](DevOps/image-20250410150634019.png) |
 
-- 构建后查看视图
+- 配置流水线，执行构建后查看视图
 
-  |                        构建后查看视图                        |
-  | :----------------------------------------------------------: |
-  | ![image-20211202144616117](DevOps/image-20211202144616117.png) |
+  ![image-20250410150851095](DevOps/image-20250410150851095.png)
+
+<img src="DevOps/image-20250410151022712.png" alt="image-20250410151022712" style="zoom:80%;" />
 
 ##### 9.2.2 Groovy脚本
 
@@ -1257,7 +1299,7 @@ Jenkins的Pipeline可以让项目的发布整体流程可视化，明确执行�
       
       // 配置全局环境，指定变量名=变量值信息
       environment{
-      	host = '192.168.11.11'
+      	host = '192.168.101.80'
       }
   
       // 存放所有任务的合集
@@ -1281,7 +1323,7 @@ Jenkins的Pipeline可以让项目的发布整体流程可视化，明确执行�
   }
   ```
 
-- 编写例子测试
+- 编写测试用例
 
   ```sh
   pipeline {
@@ -1322,15 +1364,8 @@ Jenkins的Pipeline可以让项目的发布整体流程可视化，明确执行�
   }
   ```
 
-  |                        配置Grovvy脚本                        |
-  | :----------------------------------------------------------: |
-  | ![image-20211202145155428](DevOps/image-20211202145155428.png) |
-
-- 查看效果
-
-  |                           查看效果                           |
-  | :----------------------------------------------------------: |
-  | ![image-20211202145240166](DevOps/image-20211202145240166.png) |
+  
+  
 
 [Ps：涉及到特定脚本，Jenkins给予了充足的提示，可以自动生成命令]()
 
@@ -1346,7 +1381,7 @@ Jenkinsfile方式需要将脚本内容编写到项目中的Jenkinsfile文件中�
 
   |                         配置pipeline                         |
   | :----------------------------------------------------------: |
-  | ![image-20211202151127254](DevOps/image-20211202151127254.png) |
+  | ![image-20250410152104079](DevOps/image-20250410152104079.png) |
 
 - 准备Jenkinsfile
 
@@ -1379,18 +1414,27 @@ Jenkinsfile方式需要将脚本内容编写到项目中的Jenkinsfile文件中�
 
 |                           语法生成                           |
 | :----------------------------------------------------------: |
-| ![image-20211202192047619](DevOps/image-20211202192047619.png) |
+| ![image-20250410155637963](DevOps/image-20250410155637963.png) |
 
-![image-20211202192129895](C:/Users/84264/AppData/Roaming/Typora/draftsRecover/DevOps/image-20211202192129895.png)将*/master更改为标签[${tag}]()
+```
+checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'http://192.168.101.81:8929/root/test.git']])
+```
+
+将*/main更改为标签${tag}
+
+```
+checkout scmGit(branches: [[name: '${tag}']], extensions: [], userRemoteConfigs: [[url: 'http://192.168.101.81:8929/root/test.git']])
+```
+
+
 
 ```sh
 pipeline {
     agent any
     stages {
-
         stage('拉取Git代码') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: '${tag}']], extensions: [], userRemoteConfigs: [[url: 'http://49.233.115.171:8929/root/test.git']]])
+                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'http://192.168.101.81:8929/root/test.git']])
             }
         }
     }
@@ -1401,27 +1445,27 @@ pipeline {
 
 ##### 9.3.3 构建代码
 
-通过脚本执行mvn的构建命令
+执行shell的默认路径是 拉取代码后创建的工作目录/var/jenkins_home/workspace/${job_name}
+
+通过脚本执行mvn的构建命令 
 
 ```sh
 pipeline {
     agent any
-
     stages {
-
         stage('拉取Git代码') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: '${tag}']], extensions: [], userRemoteConfigs: [[url: 'http://49.233.115.171:8929/root/test.git']]])
+                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'http://192.168.101.81:8929/root/test.git']])
             }
         }
 
         stage('构建代码') {
             steps {
-                sh '/var/jenkins_home/maven/bin/mvn clean package -DskipTests'
+            		sh '''git checkout $tag
+							 /var/jenkins_home/maven/bin/mvn clean package -DskipTests'''
             }
         }
 }
-
 ```
 
 
@@ -1434,28 +1478,30 @@ pipeline {
 pipeline {
     agent any
 
+    // 存放所有任务的合集
     stages {
-
         stage('拉取Git代码') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: '${tag}']], extensions: [], userRemoteConfigs: [[url: 'http://49.233.115.171:8929/root/test.git']]])
+                echo '拉取Git代码'
+                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'http://192.168.101.81:8929/root/test.git']])
             }
         }
 
         stage('构建代码') {
             steps {
-                sh '/var/jenkins_home/maven/bin/mvn clean package -DskipTests'
+                echo '构建代码'
+                sh '''git checkout $tag
+                /var/jenkins_home/maven/bin/mvn clean package -DskipTests'''
             }
         }
-
+        
         stage('检测代码质量') {
             steps {
-                sh '/var/jenkins_home/sonar-scanner/bin/sonar-scanner -Dsonar.sources=./ -Dsonar.projectname=${JOB_NAME} -Dsonar.projectKey=${JOB_NAME} -Dsonar.java.binaries=target/ -Dsonar.login=31388be45653876c1f51ec02f0d478e2d9d0e1fa' 
+                sh '/var/jenkins_home/sonar-scanner/bin/sonar-scanner -Dsonar.sources=./ -Dsonar.projectname=${JOB_NAME} -Dsonar.projectKey=${JOB_NAME} -Dsonar.java.binaries=target/ -Dsonar.login=3c91f13d37da06265d785773d57bb9c35e4156b2' 
             }
         }
     }
 }
-
 ```
 
 
@@ -1468,43 +1514,49 @@ pipeline {
   pipeline {
       agent any
       environment{
-          harborHost = '192.168.11.11:80'
-          harborRepo = 'repository'
-          harborUser = 'DevOps'
-          harborPasswd = 'P@ssw0rd'
+          harborUrl = '192.168.101.253:80'
+          harborProject = 'repo'
+          harborUser = 'admin'
+          harborPasswd = 'Harbor12345'
       }
   
       // 存放所有任务的合集
       stages {
-  
           stage('拉取Git代码') {
               steps {
-                  checkout([$class: 'GitSCM', branches: [[name: '${tag}']], extensions: [], userRemoteConfigs: [[url: 'http://49.233.115.171:8929/root/test.git']]])
+                  echo '拉取Git代码'
+                  checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'http://192.168.101.81:8929/root/test.git']])
               }
           }
   
           stage('构建代码') {
               steps {
-                  sh '/var/jenkins_home/maven/bin/mvn clean package -DskipTests'
+                  echo '构建代码'
+                  sh '''git checkout $tag
+                  /var/jenkins_home/maven/bin/mvn clean package -DskipTests'''
               }
           }
-  
+          
           stage('检测代码质量') {
               steps {
-                  sh '/var/jenkins_home/sonar-scanner/bin/sonar-scanner -Dsonar.sources=./ -Dsonar.projectname=${JOB_NAME} -Dsonar.projectKey=${JOB_NAME} -Dsonar.java.binaries=target/ -Dsonar.login=31388be45653876c1f51ec02f0d478e2d9d0e1fa' 
+                  sh '/var/jenkins_home/sonar-scanner/bin/sonar-scanner -Dsonar.sources=./ -Dsonar.projectname=${JOB_NAME} -Dsonar.projectKey=${JOB_NAME} -Dsonar.java.binaries=target/ -Dsonar.login=3c91f13d37da06265d785773d57bb9c35e4156b2' 
               }
           }
   
-          stage('制作自定义镜像并发布Harbor') {
+          stage('制作自定义镜像') {
               steps {
-                  sh '''cp ./target/*.jar ./docker/
-                  cd ./docker
-                  docker build -t ${JOB_NAME}:${tag} ./'''
-  
-                  sh '''docker login -u ${harborUser} -p ${harborPasswd} ${harborHost}
-                  docker tag ${JOB_NAME}:${tag} ${harborHost}/${harborRepo}/${JOB_NAME}:${tag}
-                  docker push ${harborHost}/${harborRepo}/${JOB_NAME}:${tag}'''
+                  sh '''mv target/*.jar docker/
+  							 docker build -t ${JOB_NAME}:${tag} docker/'''			
               }
+          }
+          
+          stage('推送Harbor'){
+          	// 推送Harbor
+  					  steps{
+  					  sh '''docker login ${harborUrl} -u ${harborUser} -p ${harborPasswd}
+                  docker tag ${JOB_NAME}:${tag} ${harborUrl}/${harborProject}/${JOB_NAME}:${tag}
+                  docker push ${harborUrl}/${harborProject}/${JOB_NAME}:${tag}'''
+  					  }       
           }
       }
   }
@@ -1516,60 +1568,78 @@ pipeline {
   pipeline {
       agent any
       environment{
-          harborHost = '192.168.11.11:80'
-          harborRepo = 'repository'
-          harborUser = 'DevOps'
-          harborPasswd = 'P@ssw0rd'
+          harborUrl = '192.168.101.253:80'
+          harborProject = 'repo'
+          harborUser = 'admin'
+          harborPasswd = 'Harbor12345'
       }
   
       // 存放所有任务的合集
       stages {
-  
           stage('拉取Git代码') {
               steps {
-                  checkout([$class: 'GitSCM', branches: [[name: '${tag}']], extensions: [], userRemoteConfigs: [[url: 'http://49.233.115.171:8929/root/test.git']]])
+                  echo '拉取Git代码'
+                  checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'http://192.168.101.81:8929/root/test.git']])
               }
           }
   
           stage('构建代码') {
               steps {
-                  sh '/var/jenkins_home/maven/bin/mvn clean package -DskipTests'
+                  sh '''git checkout $tag
+                  /var/jenkins_home/maven/bin/mvn clean package -DskipTests'''
               }
-          }docker
-  
+          }
+          
           stage('检测代码质量') {
               steps {
-                  sh '/var/jenkins_home/sonar-scanner/bin/sonar-scanner -Dsonar.sources=./ -Dsonar.projectname=${JOB_NAME} -Dsonar.projectKey=${JOB_NAME} -Dsonar.java.binaries=target/ -Dsonar.login=7d66af4b39cfe4f52ac0a915d4c9d5c513207098' 
+                  sh '/var/jenkins_home/sonar-scanner/bin/sonar-scanner -Dsonar.sources=./ -Dsonar.projectname=${JOB_NAME} -Dsonar.projectKey=${JOB_NAME} -Dsonar.java.binaries=target/ -Dsonar.login=3c91f13d37da06265d785773d57bb9c35e4156b2' 
               }
           }
   
-          stage('制作自定义镜像并发布Harbor') {
+          stage('制作自定义镜像') {
               steps {
-                  sh '''cp ./target/*.jar ./docker/
-                  cd ./docker
-                  docker build -t ${JOB_NAME}:${tag} ./'''
-  
-                  sh '''docker login -u ${harborUser} -p ${harborPasswd} ${harborHost}
-                  docker tag ${JOB_NAME}:${tag} ${harborHost}/${harborRepo}/${JOB_NAME}:${tag}
-                  docker push ${harborHost}/${harborRepo}/${JOB_NAME}:${tag}'''
+                  sh '''mv target/*.jar docker/
+  							 docker build -t ${JOB_NAME}:${tag} docker/'''			
               }
+          }
+          
+          stage('推送Harbor'){
+          	// 推送Harbor
+  					  steps{
+  					  sh '''docker login ${harborUrl} -u ${harborUser} -p ${harborPasswd}
+                  docker tag ${JOB_NAME}:${tag} ${harborUrl}/${harborProject}/${JOB_NAME}:${tag}
+                  docker push ${harborUrl}/${harborProject}/${JOB_NAME}:${tag}'''
+  					  }       
           }
           
           stage('目标服务器拉取镜像并运行') {
               steps {
-                  sshPublisher(publishers: [sshPublisherDesc(configName: 'testEnvironment', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: "/usr/bin/deploy.sh $harborHost $harborRepo $JOB_NAME $tag $port ", execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+                  sshPublisher(publishers: [sshPublisherDesc(configName: 'test-82', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: "deploy.sh ${harborUrl}  ${harborProject} ${JOB_NAME} $tag  $hostPort $containerPort", execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
               }
           }
       }
   }
   ```
 
-[Ps：由于采用变量，记得使用双引号](
-)
+**PS**:
+
+在 Groovy 中，
+
+'' 表示 普通字符串，不会进行变量替换。
+
+"" 表示可插值的字符串，会自动替换 ${} 中的变量。
+
+jenkins生成的流水线脚本是单引号，需要修改成
+
+```
+"deploy.sh ${harborUrl}  ${harborProject} ${JOB_NAME} $tag  $hostPort $containerPort"
+```
+
+
 
 #### 9.4 Jenkins流水线整合钉钉
 
-在程序部署成功后，可以通过钉钉的机器人及时向群众发送部署的最终结果通知
+在程序部署成功后，可以通过钉钉的机器人及时向用户发送部署的最终结果通知
 
 - 安装插件
 
@@ -1585,17 +1655,19 @@ pipeline {
   | ![image-20211209152252050](DevOps/image-20211209152252050.png) |
   | ![image-20211209152403312](DevOps/image-20211209152403312.png) |
 
+  ![image-20250411120906664](DevOps/image-20250411120906664.png)
+
   最终或获取到Webhook信息
 
   ```
-  https://oapi.dingtalk.com/robot/send?access_token=kej4ehkj34gjhg34jh5bh5jb34hj53b4
+  https://oapi.dingtalk.com/robot/send?access_token=b8f711305310ed14b790b9d9b3bdc146525ce3c1e4dfde35f461002e47114812
   ```
 
 - 系统配置添加钉钉通知
 
   |                         配置钉钉通知                         |
   | :----------------------------------------------------------: |
-  | ![image-20211209162923440](DevOps/image-20211209162923440.png) |
+  | ![image-20250411120810761](DevOps/image-20250411120810761.png) |
 
 
 - 任务中追加流水线配置
@@ -1604,87 +1676,89 @@ pipeline {
   pipeline {
       agent any
   
-      environment {
-          sonarLogin = '2bab7bf7d5af25e2c2ca2f178af2c3c55c64d5d8'
+      environment{
+          harborUrl = '192.168.101.253:80'
+          harborProject = 'repo'
           harborUser = 'admin'
-          harborPassword = 'Harbor12345'
-          harborHost = '192.168.11.12:8888'
-          harborRepo = 'repository'
+          harborPasswd = 'Harbor12345'
       }
   
       stages {
-          stage('拉取Git代码'){
+          stage('拉取Git代码') {
               steps {
-                  checkout([$class: 'GitSCM', branches: [[name: '$tag']], extensions: [], userRemoteConfigs: [[url: 'http://49.233.115.171:8929/root/lsx.git']]])
-              }
-          }
-          stage('Maven构建代码'){
-              steps {
-                  sh '/var/jenkins_home/maven/bin/mvn clean package -DskipTests'
-              }
-          }
-          stage('SonarQube检测代码'){
-              steps {
-                  sh '/var/jenkins_home/sonar-scanner/bin/sonar-scanner -Dsonar.sources=./ -Dsonar.projectname=${JOB_NAME} -Dsonar.projectKey=${JOB_NAME} -Dsonar.java.binaries=target/ -Dsonar.login=${sonarLogin}'
-              }
-          }
-          stage('制作自定义镜像'){
-              steps {
-                  sh '''cd docker
-                  mv ../target/*.jar ./
-                  docker build -t ${JOB_NAME}:$tag .
-                  '''
+                  echo '拉取Git代码'
+                  checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'http://192.168.101.81:8929/root/test.git']])
               }
           }
   
-          stage('推送自定义镜像'){
+          stage('构建代码') {
               steps {
-                  sh '''docker login -u ${harborUser} -p ${harborPassword} ${harborHost}
-                  docker tag ${JOB_NAME}:$tag ${harborHost}/${harborRepo}/${JOB_NAME}:$tag
-                  docker push ${harborHost}/${harborRepo}/${JOB_NAME}:$tag'''
+                  echo '构建代码'
+                  sh '''git checkout $tag
+                  /var/jenkins_home/maven/bin/mvn clean package -DskipTests'''
+              }
+          }
+          
+          stage('检测代码质量') {
+              steps {
+                  sh '/var/jenkins_home/sonar-scanner/bin/sonar-scanner -Dsonar.sources=./ -Dsonar.projectname=${JOB_NAME} -Dsonar.projectKey=${JOB_NAME} -Dsonar.java.binaries=target/ -Dsonar.login=3c91f13d37da06265d785773d57bb9c35e4156b2' 
               }
           }
   
-          stage('通知目标服务器'){
+          stage('制作自定义镜像') {
               steps {
-                  sshPublisher(publishers: [sshPublisherDesc(configName: 'centos-docker', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: "/usr/bin/deploy.sh $harborHost $harborRepo $JOB_NAME $tag $port", execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
-              }  
+                  sh '''mv target/*.jar docker/
+  							 docker build -t ${JOB_NAME}:${tag} docker/'''			
+              }
+          }
+          
+          stage('推送Harbor'){
+          	// 推送Harbor
+  					  steps{
+  					  sh '''docker login ${harborUrl} -u ${harborUser} -p ${harborPasswd}
+                  docker tag ${JOB_NAME}:${tag} ${harborUrl}/${harborProject}/${JOB_NAME}:${tag}
+                  docker push ${harborUrl}/${harborProject}/${JOB_NAME}:${tag}'''
+  					  }       
+          }
+          
+          stage('目标服务器拉取镜像并运行') {
+              steps {
+                  sshPublisher(publishers: [sshPublisherDesc(configName: 'test-82', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: "deploy.sh ${harborUrl}  ${harborProject} ${JOB_NAME} $tag  $hostPort $containerPort", execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+              }
           }
       }
+      
       post {
           success {
               dingtalk (
-                  robot: 'Jenkins-DingDing',
+                  robot: '0920',
                   type:'MARKDOWN',
                   title: "success: ${JOB_NAME}",
-                  text: ["- 成功构建:${JOB_NAME}项目!\n- 版本:${tag}\n- 持续时间:${currentBuild.durationString}\n- 任务:#${JOB_NAME}"]
+                  text: ["- 成功构建:${JOB_NAME}项目! \n- 版本:${tag}\n- 持续时间:${currentBuild.durationString}\n- 任务:#${JOB_NAME}"]
               )
           }
+          
           failure {
               dingtalk (
-                  robot: 'Jenkins-DingDing',
+                  robot: '0920',
                   type:'MARKDOWN',
                   title: "fail: ${JOB_NAME}",
-                  text: ["- 失败构建:${JOB_NAME}项目!\n- 版本:${tag}\n- 持续时间:${currentBuild.durationString}\n- 任务:#${JOB_NAME}"]
+                  text: ["- 失败构建:${JOB_NAME}项目! \n- 版本:${tag}\n- 持续时间:${currentBuild.durationString}\n- 任务:#${JOB_NAME}"]
               )
           }
       }
   }
   ```
 
+  
+
 - 查看效果
 
   |                         钉钉通知效果                         |
   | :----------------------------------------------------------: |
-  | ![image-20211209163021396](DevOps/image-20211209163021396.png) |
+  | ![image-20250411121400082](DevOps/image-20250411121400082.png) |
 
-```
- 
- 
- 
- 
- 
-```
+
 
 
 
@@ -1692,11 +1766,9 @@ pipeline {
 
 #### 10.1 Kubernetes介绍
 
-Kubernetes用于 **管理云平台中多个主机上的容器化的应用**，Kubernetes的目标是 让部署容器化的应用简单并且高效（powerful），Kubernetes提供了应用部署，规划，更新，维护的一种机制。
+Kubernetes用于 **管理云平台中多个主机上的容器化应用**，目标是 让部署容器化的应用简单并且高效（powerful），Kubernetes提供了应用部署，规划，更新，维护的一种机制。
 
-Kubernetes一个核心的特点就是能够 自主的管理容器来保证云平台中的容器 按照用户的期望状态运行着，管理员可以加载一个微型服务，让规划器来找到合适的位置，同时，Kubernetes也系统提升工具以及人性化方面，让用户能够方便的部署自己的应用。
-
-Kubernetes主要能帮助我们完成：
+主要能帮助我们完成：
 
 - 服务发现和负载均衡
 

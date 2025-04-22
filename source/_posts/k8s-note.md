@@ -11,16 +11,16 @@ date: 2024-05-23 15:29:16
 
 ![](k8s-note/k8s-architecture.png)
 
-## 一、核心架构概览
+## 一、核心架构
 
 k8s 集群由 **Master 控制平面** 和 **Worker 节点** 组成，遵循 声明式API 和 控制器模式。
 
 控制器模式则是 k8s 实现声明式 API 的核心机制。控制器不断监控集群状态，当实际状态与期望状态不符时，自动进行调整，确保集群始终处于预期状态 。
 
 ### 1. Master 节点组件
-- **API Server（kube-apiserver）**  
+- **API Server（kube-apiserver）**   默认端口 6443
   
-  - K8S API，集群统一入口(gataway)，以RESTful提供接口服务(包括认证授权、数据校验以及集群状态变更)，各组件协调者，所有资源的增删改查和监听操作都交给APIServer处理后在提交给etcd存储。 默认端口 6443
+  - K8S API，集群统一入口(gataway)，以RESTful提供接口服务(包括认证授权、数据校验以及集群状态变更)，各组件协调者，所有资源的增删改查和监听操作都交给APIServer处理后再提交给etcd存储。
   - 负责 认证、授权、请求校验，并将状态持久化到 etcd。  
   
 - **etcd**  
@@ -28,9 +28,10 @@ k8s 集群由 **Master 控制平面** 和 **Worker 节点** 组成，遵循 声�
   - 使用 Raft 协议保证一致性。  
 
 - **Controller Manager（kube-controller-manager）**  
+  
   - 运行多种控制器，通过**控制循环**确保实际状态与期望状态一致。  
   - **控制循环是 k8s 实现自动化的核心机制**，通过持续observe、analyze、act和loop，确保系统始终朝着用户定义的期望状态收敛
-
+  
 - **Scheduler（kube-scheduler）**  
   - 负责分配调度 Pod 到集群内的节点上，它监听 kube-apiserver，查询还未分配 Node 的 Pod，然后根据调度策略为这些 Pod 分配节点（更新 Pod 的 NodeName 字段）。
 
@@ -41,7 +42,7 @@ k8s 集群由 **Master 控制平面** 和 **Worker 节点** 组成，遵循 声�
 ### 2. Worker 节点组件
 - **kubelet**  端口 10250
   
-  - kubelet是Master在Node节点上的Agent，管理本机运行容器的生命周期，比如创建容器、Pod挂载数据卷、下载Secret、获取容器节点状态工作。kubelet将每个Pod转换成一组容器。
+  - kubelet是Master在Node节点上的Agent，管理本机运行容器的生命周期，比如创建容器、Pod挂载数据卷、下载Secret、获取容器节点状态工作。
   
     每个节点上都运行一个 kubelet 服务进程，默认监听 10250 端口，接收并执行 master 发来的指令，管理 Pod 及 Pod 中的容器。每个 kubelet 进程会在 API Server 上注册节点自身信息，定期向 master 节点汇报节点的资源使用情况，并通过 cAdvisor 监控节点和容器的资源。
   
@@ -169,7 +170,7 @@ k8s 集群由 **Master 控制平面** 和 **Worker 节点** 组成，遵循 声�
    - [设计文档](https://github.com/k8s/community/tree/master/contributors/design-proposals)  
 3. **源码分析**：研究核心控制器逻辑。  
 
-# k8s 
+# k8S
 
 k8s is an open source **container orchestration engine** for automating deployment, scaling, and management of containerized applications. 
 
@@ -183,19 +184,21 @@ k8s is an open source **container orchestration engine** for automating deployme
 
 ![image-20240412193454226](k8s-note/image-20240412193454226.png?lastModify=1716449400)
 
-
-
 ​												传统二进制	  																					kubeadm
 
-## 整体架构
+
+
+## 网络架构
 
 ![image-20240412193615615](k8s-note/image-20240412193615615.png?lastModify=1716449400)
 
 ![image-20240412193834338](k8s-note/image-20240412193834338.png?lastModify=1716449400)
 
+## 容器引擎
+
+![image-20250413141815840](k8s-note/image-20250413141815840.png)
 
 
-![image-20240412193922752](k8s-note/image-20240412193922752.png?lastModify=1716449400)
 
 ![image-20240416230722588](k8s-note/image-20240416230722588.png?lastModify=1716449400)
 
@@ -205,7 +208,7 @@ k8s is an open source **container orchestration engine** for automating deployme
 
 **方式**
 
-**命令行**      kubectl run my-pod --image=nginx --restart=Never 
+**命令行**      kubectl run podName --image=nginx:1.24  
 
 **yaml**   kubectl apply -f my-pod.yaml
 
@@ -239,15 +242,15 @@ spec:
 ​	调度器会考虑多种因素，包括节点的资源可用性（CPU、内存等）、亲和性和反亲和性规则、污点和容忍等。
 4 Kubelet 拉取镜像并启动容器
 ​	当调度器决定将 Pod 分配给某个节点后，该节点上的 Kubelet 组件会收到通知。
-​		Kubelet 通过cri调用docker从指定的镜像仓库（例如 Docker Hub）拉取 nginx:1.21 镜像。
-​		拉取完成后，Kubelet 使用容器运行时（如 containerd 或 Docker）启动容器。
+​		Kubelet 通过 CRI(cri-dockerd) 调用Container Runtime从指定的镜像仓库（例如 Docker Hub）拉取 nginx:1.21 镜像。
+​		拉取完成后，Kubelet 使用Container Runtime（如 containerd 或 Docker）启动容器。
 5 健康检查和状态更新
 ​	容器启动后，Kubelet 会定期进行健康检查（如果配置了 Liveness 和 Readiness Probes）。
 ​	如果一切正常，Pod 的状态会被更新为 Running，并且可以通过 kubectl get pods 查看到。
 6 访问 Pod
 ​	如果需要访问这个 Pod，可以通过端口转发或服务（Service）的方式进行访问：
 ​	使用 kubectl port-forward 命令进行本地端口转发：
-​		kubectl port-forward pod/my-pod 8080:80
+​	kubectl port-forward pod/my-pod 8080:80
 ​	或者创建一个 Service 来暴露 Pod。
 
 ```
@@ -415,6 +418,7 @@ Kubelet：
 监控和日志收集：
 收集容器的日志并发送到集中式的日志管理系统。
 收集性能指标并暴露给 API Server，供监控工具使用。
+
 总结
 kubectl apply -f nginx-deployment.yml 的执行流程涉及多个 Kubernetes 组件的协同工作：
 
@@ -427,9 +431,11 @@ Kubelet：负责在节点上启动容器，并执行健康检查。
 监控和日志收集：收集日志和性能指标，供后续分析和监控使用。
 ```
 
+## kubeadm部署
 
+![image-20250413142024188](k8s-note/image-20250413142024188.png)
 
-主机名规划
+### 主机名规划
 
 | 序号 | 主机ip          | 主机名规划                           |
 | ---- | --------------- | ------------------------------------ |
@@ -439,7 +445,7 @@ Kubelet：负责在节点上启动容器，并执行健康检查。
 | 4    | 192.168.101.123 | k8s-node3.sswang.com k8s-node3       |
 | 5    | 192.168.101.124 | k8s-register.sswang.com k8s-register |
 
-跨主机免密码认证
+### 跨主机免密码认证
 
 ```sh
 生成秘钥对
@@ -452,7 +458,7 @@ ssh-copy-id root@192.168.101.123
 ssh-copy-id root@192.168.101.124
 ```
 
-master安装ansible
+### master安装ansible
 
 ```shell
 yum install -y epel-release ansible
@@ -471,11 +477,8 @@ echo '192.168.101.120 k8s-master.sswang.com k8s-master
 192.168.101.123 k8s-node3.sswang.com k8s-node3
 192.168.101.124 k8s-register.sswang.com k8s-register'  >> /etc/hosts
 
-echo "192.168.101.120 k8s-master.sswang.com k8s-master
-192.168.101.121 k8s-node1.sswang.com k8s-node1
-192.168.101.122 k8s-node2.sswang.com k8s-node2
-192.168.101.123 k8s-node3.sswang.com k8s-node3
-192.168.101.124 k8s-register.sswang.com k8s-register" |  tee -a /etc/hosts # tee将字符串写入指定的文件 -a append 
+# echo "test" |  tee -a /etc/hosts 
+# tee将字符串写入指定的文件 -a append 
 
 ansible test -m copy   -a "src=/etc/hosts dest=/etc/hosts"
 ansible test -m shell  -a "reboot"
@@ -516,7 +519,7 @@ ansible test -m shell  -a "sysctl -p /etc/sysctl.d/k8s.conf"
 
 
 
-docker安装
+### docker安装
 
 ```sh
 #设置Docker的安装环境：首先安装yum-utils工具，然后通过yum-config-manager添加Docker的官方仓库
@@ -559,7 +562,7 @@ systemctl enable docker
 
 
 
-cri部署
+### cri部署
 
 ```sh
 #方式一 rpm 本次采用
@@ -567,8 +570,8 @@ mkdir /data/softs -p && cd /data/softs
 rpm -ivh cri-dockerd-0.3.12-3.el7.x86_64.rpm
 
 vim /usr/lib/systemd/system/cri-docker.service
-#加上--pod-infra-container-image=k8s-register.sswang.com/google_containers/pause:3.9（需确保可以访问harbor）否则无法创建pod 或者加上registry.cn-hangzhou.aliyuncs.com/google_containers/pause:3.9
-ExecStart=/usr/bin/cri-dockerd --pod-infra-container-image=k8s-register.sswang.com/google_containers/pause:3.9
+#加上--pod-infra-container-image=k8s-register.sswang.com/google_containers/pause:3.9（需确保可以访问harbor）否则无法创建pod 或者 加上registry.aliyuncs.com/google_containers/pause:3.9
+ExecStart=/usr/bin/cri-dockerd --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause:3.9
 
 
 #启动
@@ -644,7 +647,7 @@ EOF
 
 
 
-harbor构建 (仅在124上执行)
+## harbor构建 (仅在124上执行)
 
 ```sh
 # docker compose install
@@ -763,7 +766,7 @@ docker pull k8s-register.sswang.com/vj/busybox:v0.1
 
 
 
-Installing kubeadm
+## Installing kubeadm
 
 https://v1-27.docs.k8s.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
 
@@ -862,7 +865,7 @@ sudo rm -rf /var/lib/etcd/*
 
 
 
-自动补全功能 别名
+## 自动补全功能 别名
 
 ```sh
 yum -y install bash-completion
@@ -878,10 +881,10 @@ echo 'source <(helm completion bash)' >> ~/.bashrc
 source ~/.bashrc
 ```
 
-
+## 网络插件安装
 
 ```sh
-#Flannel是CoreOS团队针对k8s设计的一个网络规划服务。主要功能是让集群中的不同节点主机创建的Docker容器都具有全集群唯一的虚拟IP地址。这样，即使容器在不同的主机上运行，它们之间也可以像在同一个网络中一样进行通信。
+#Flannel是一个网络规划服务。主要功能是让集群中的不同节点主机创建的Docker容器都具有全集群唯一的虚拟IP地址。这样，即使容器在不同的主机上运行，它们之间也可以像在同一个网络中一样进行通信。
 mkdir /data/k8s/flannel -p
 cd /data/k8s/flannel/
 wget https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
@@ -908,7 +911,7 @@ systemctl enable docker cri-docker kubelet
 
 
 
-
+## 整体架构
 
 ![image-20240422163711486](k8s-note/image-20240422163711486.png?lastModify=1716449400)
 
@@ -1213,9 +1216,9 @@ spec:
         - containerPort: 80
 ```
 
-在这个示例中，Deployment 创建了 3 个副本的 Nginx 容器，每个 Pod 是独立且可互换的，没有固定的标识符。
+此Deployment 创建了 3 个pod，每个pod有一个nginx 容器，每个 Pod 的name自动分配。
 
-
+可参考https://guangzhengli.com/courses/kubernetes/deployment
 
 ## StatefulSet配置模版
 
@@ -1262,25 +1265,25 @@ spec:
 
 在这个示例中，`StatefulSet` 创建了 3 个 MySQL 实例，每个实例都有自己的持久卷，并且 Pod 名称分别为 `db-statefulset-0`, `db-statefulset-1`, `db-statefulset-2`。
 
-## Deployment和StatefulSet区别
+## Deployment 和 StatefulSet区别
 
-特性			Deployment				StatefulSet
-适用场景	无状态应用	 			 有状态应用
-Pod 标识	动态分配，无固定标识	固定标识（如 pod-name-0）
-存储管理	动态分配，无持久化存储	稳定的持久化存储
-更新策略	并行滚动更新	顺序滚动更新
-网络标识	无稳定网络标识	稳定的网络标识
-扩展和缩减	灵活扩展和缩减	有序扩展和缩减
+feature        Deployment						 StatefulSet
+适用场景	 无状态应用	 			     	有状态应用
+Pod 标识	 动态分配，无固定标识	    固定标识（如 pod-name-0）
+存储管理	 动态分配，无持久化存储	 稳定的持久化存储
+更新策略	 并行滚动更新						顺序滚动更新
+网络标识	 无稳定网络标识					稳定的网络标识
+扩展缩减	 灵活扩展和缩减				    有序扩展和缩减
 
 
 
-**标签（Labels）** 是附加到对象（比如 Pod）上的键值对，用于补充对象的描述信息。
 
-标签使用户能够以松散的方式管理对象映射，而无需客户端存储这些映射。
-
-由于一个集群中可能管理成千上万个容器，我们可以使用标签高效的进行　选择　和　操作　容器集合。
 
 ## [label配置模版](https://k8s.io/zh-cn/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set)
+
+**标签（Labels）** 是 附加到对象（比如 Pod）上的键值对，用于补充对象的描述信息。
+
+由于一个集群中可能管理成千上万个容器，可以使用标签高效的进行　选择　和　操作　容器集合。
 
 ```yml
 apiVersion: v1
@@ -1336,15 +1339,17 @@ selector:
 
 ## [Service配置模版](https://k8s.io/zh-cn/docs/concepts/services-networking/service/#type-nodeport)
 
+参考https://guangzhengli.com/courses/kubernetes/service
+
 ### **使用模式对比**
 
-| Kind     | ClusterIP | NodePort       | LoadBalancer | ExternalName | Headless |
-| -------- | --------- | -------------- | ------------ | ------------ | -------- |
-| 网络位置 | 集群内部  | 节点 IP + 端口 | 公网 / IP    | 外部 DNS     |          |
-| 负载均衡 | 自动      | 节点级别       | 云厂商 LB    | 无           |          |
-| 适用环境 | 所有环境  | 无 LB 的裸机   | 公有云环境   | 混合云       |          |
-| 典型成本 | 免费      | 免费           | 按小时计费   | 免费         |          |
-| 服务发现 | DNS 轮询  | 手动维护       | 自动管理     | CNAME 解析   |          |
+| Kind     | ClusterIP | NodePort     | LoadBalancer | ExternalName | Headless |
+| -------- | --------- | ------------ | ------------ | ------------ | -------- |
+| 网络位置 | 集群内部  | IP + Port    | 公网 / IP    | 外部 DNS     |          |
+| 负载均衡 | 自动      | 节点级别     | 云厂商 LB    | 无           |          |
+| 适用环境 | 所有环境  | 无 LB 的裸机 | 公有云环境   | 混合云       |          |
+| 典型成本 | 免费      | 免费         | 按小时计费   | 免费         |          |
+| 服务发现 | DNS 轮询  | 手动维护     | 自动管理     | CNAME 解析   |          |
 
 ------
 
@@ -1686,6 +1691,8 @@ lrwxrwxrwx 1 root root 16 2月   7 19:58 mysql.cnf -> ..data/mysql.cnf
 
 ## 持久卷(PV-Persistent Volume)与持久卷声明(PVC-Persistent Volume Claim)
 
+https://kubernetes.io/docs/concepts/storage/
+
 PV PVC
 
 PV是 集群中的一块存储。可以理解为一块虚拟硬盘。
@@ -1700,7 +1707,7 @@ PVC 表达的是 用户对存储的请求。
 
 PVC 类似 申请单，它更贴近云服务的使用场景，使用资源先申请，便于统计和计费。
 
-Pod 将 PVC 当做Volume来使用，PVC 可以请求指定容量的存储空间和[访问模式](https://k8s.io/zh-cn/docs/concepts/storage/persistent-volumes/#access-modes) 。PVC对象是带有namespace的。
+Pod 将 PVC 当做Volume来使用，PVC 可以请求指定容量的存储空间和[访问模式](https://k8s.io/zh-cn/docs/concepts/storage/persistent-volumes/#access-modes) 。**PVC带有namespace**。
 
 
 
@@ -1708,8 +1715,8 @@ Pod 将 PVC 当做Volume来使用，PVC 可以请求指定容量的存储空间�
 
 
 
-Types of Persistent Volumes
-PersistentVolume types are implemented as plugins. Kubernetes currently supports the following plugins:
+Types of PV
+PV types are implemented as plugins. K8s currently supports the following plugins:
 
 - csi - Container Storage Interface (CSI)
 - fc - Fibre Channel (FC) storage
@@ -1724,7 +1731,9 @@ PersistentVolume types are implemented as plugins. Kubernetes currently supports
 
 hostPath仅供单节点测试使用，当Pod被重新创建时，可能会被调度到与原先不同的节点上，导致新的Pod没有数据。
 
-多节点集群使用本地存储，可以使用local卷 ref:https://kubernetes.io/docs/concepts/storage/volumes/#local
+多节点集群使用本地存储，可以使用local卷 
+
+
 
 **创建local类型的PV，需要先创建存储类(StorageClass)**。
 
@@ -1749,7 +1758,7 @@ spec:
   - ReadWriteOnce
   persistentVolumeReclaimPolicy: Delete
   storageClassName: sc-mysql #通过指定存储类来设置卷的类型
-  local:
+  local:									 #local类型
     path: /mnt/disks/ssd1    #该目录须在worker1上手动创建
   nodeAffinity:
     required:
@@ -2478,6 +2487,3 @@ helm package my-chart
 
 ---
 
-# Prometheus 
-
- Prometheus 的原理

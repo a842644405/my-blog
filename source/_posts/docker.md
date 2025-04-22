@@ -398,6 +398,7 @@ docker load  -i redis6.0.tar
 通过镜像运行容器
 
 ```sh
+docker run -it busybox sh
 docker run --name nginx -p 80:80 -d nginx:1.21
 ```
 
