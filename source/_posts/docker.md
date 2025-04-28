@@ -8,15 +8,15 @@ title: Docker
 
 ### 1.1.1.应用部署的环境问题
 
-大型项目 组件多，运行环境 复杂，部署碰到问题：
+大型项目 组件多，运行环境复杂，部署碰到问题：
 
-- 依赖关系 复杂，出现 兼容性问题
+- 依赖关系 复杂，兼容性问题
 
 - 开发、测试、生产环境 有差异
 
 
 
-![image-20210731141907366](docker/image-20210731141907366.png)
+<img src="docker/image-20210731141907366.png" alt="image-20210731141907366" style="zoom:80%;" />
 
 
 
@@ -28,7 +28,7 @@ title: Docker
 
 Docker为解决依赖的兼容问题的，采用 两个手段：
 
-- 将 应用的Libs（函数库）、Deps（依赖）、配置与应用 一起打包
+- 将 应用的Libs（函数库）、Deps（依赖）、配置 与 应用 一起打包
 
 - 将每个应用放到一个隔离**容器**去运行，避免互相干扰
 
@@ -36,7 +36,7 @@ Docker为解决依赖的兼容问题的，采用 两个手段：
 
 
 
-这样打包好的应用包中，包含应用本身，应用所需要的Libs、Deps，无需再操作系统上安装这些，自然就不存在不同应用之间的兼容问题了。
+这样打包好的应用包中，包含应用本身极其所需要Libs、Deps，无需再在操作系统上安装，就不存在不同应用之间的兼容问题了。
 
 虽然解决了兼容问题，但是开发、测试等环境依然有差异
 
@@ -50,7 +50,7 @@ Docker为解决依赖的兼容问题的，采用 两个手段：
 
 结构包括：
 
-- 计算机硬件：例如CPU、内存、磁盘等
+- 计算机硬件：例如CPU、内存、IO、硬盘、网卡等
 - 系统内核：所有Linux发行版的内核都是Linux，例如CentOS、Ubuntu、Fedora等。内核与计算机硬件交互，通过**内核指令**操作计算机硬件。
 - 系统应用：操作系统自带的应用、函数库。这些**函数库是对内核指令的封装**。centos和ubuntu对内核指令的封装不同
 
@@ -66,7 +66,7 @@ Docker为解决依赖的兼容问题的，采用 两个手段：
 
 
 
-Ubuntu和CentOS都基于Linux内核，无非是 系统应用、函数库有差异：
+Ubuntu和CentOS都基于Linux内核，无非是 **系统应用**、**函数库**有差异：
 
 ![image-20210731144304990](docker/image-20210731144304990.png)
 
@@ -80,7 +80,7 @@ Ubuntu和CentOS都基于Linux内核，无非是 系统应用、函数库有差�
 
 Docker如何解决？
 
-- Docker将 用户程序 与所需要 调用的系统(比如Ubuntu)函数库一起打包
+- Docker将 应用 与所需 调用的系统(比如Ubuntu)函数库一起打包
 - Docker运行到不同操作系统时，直接基于打包的函数库，借助于操作系统的Linux内核来运行
 
 如图：
@@ -91,18 +91,10 @@ Docker如何解决？
 
 ### 1.1.4.小结
 
-- Docker允许开发中将应用、依赖、函数库、配置一起**打包**，形成可移植镜像
+- Docker允许将 应用、依赖、函数库、配置一起**打包**，形成一个可移植的镜像
 - Docker应用运行在容器中，使用沙箱机制，相互**隔离**
 
 - Docker镜像中包含完整运行环境，包括系统函数库，**仅依赖系统的Linux内核**，因此可以在任意Linux操作系统上运行
-
-
-
-Docker是一个快速交付应用、运行应用的技术，具备下列优势：
-
-- 可以 将 程序及其依赖、运行环境 一起打包为一个镜像，可以迁移到任意Linux操作系统
-- 运行时 利用沙箱机制 形成 隔离容器，各个应用 互不干扰
-- 启动、移除都可以通过一行命令完成，方便快捷
 
 
 
@@ -186,11 +178,11 @@ CS架构：
 
 镜像：
 
-​	将应用程序及其依赖、环境、配置打包在一起
+​	将应用程序及其依赖、环境、配置打包在一起的 文件
 
 容器：
 
-​	镜像运行后，一个镜像可以运行多个容器
+​	镜像运行后的 进程，一个镜像可以运行多个容器
 
 Docker架构：
 
@@ -198,19 +190,23 @@ Docker架构：
 
 ​	客户端：发送命令或者请求到Docker服务端
 
-DockerHub：
+镜像仓库：
 
-​	镜像托管的服务器，类似的还有阿里云镜像服务，统称为 DockerRegistry
+​	公有：dockerhub、阿里云、华为云镜像服务
+
+　私有：harbor
 
 
 
 ## 1.4.安装Docker
 
-CentOS下安装Docker。
-
-官方安装链接
+官方安装参考链接
 
 https://docs.docker.com/engine/install/centos/
+
+
+
+CentOS下安装Docker
 
 1.脚本快速安装
 
@@ -265,6 +261,8 @@ sudo systemctl start docker
 ### 2.1.1.镜像名称
 
 repository:tag
+
+redis:7.2.0
 
 - 在没有指定tag时，默认是latest
 
@@ -377,7 +375,7 @@ docker load  -i redis6.0.tar
 
 容器的三状态
 
-- 运行（up）：进程正常运行
+- 运行（running）：进程正常运行
 - 暂停（suspend）：进程暂停，CPU不再运行，并不释放内存
 - 停止(halt)：进程终止，回收进程占用的内存、CPU等资源
 
@@ -393,7 +391,7 @@ docker load  -i redis6.0.tar
 
 
 
-### 2.2.2.案例-创建并运行一个容器
+### 2.2.2.创建并运行一个容器
 
 通过镜像运行容器
 
@@ -402,11 +400,11 @@ docker run -it busybox sh
 docker run --name nginx -p 80:80 -d nginx:1.21
 ```
 
-docker run  创建并运行一个容器
+run  创建并运行一个容器
 
 --name   给容器命名
 
--p  宿主机端口：容器端口
+-p  宿主机端口 ：容器端口
 
 -d  后台运行容器
 
@@ -414,9 +412,9 @@ nginx:1.21 镜像名称
 
 
 
-默认情况下，容器是隔离环境，直接访问宿主机的80端口，肯定访问不到容器中的nginxde 80端口。
+默认情况下，容器是隔离环境，直接访问宿主机的80端口，肯定访问不到容器中的nginx 80端口。
 
-现在，将容器的80与宿主机的80关联，访问宿主机的80会被映射到容器的80，成功访问到nginx：
+只有将 容器的80 与 宿主机的80 做映射，访问宿主机的80 就能映射到 容器的80：
 
 ![image-20210731163255863](docker/image-20210731163255863.png)
 
@@ -432,7 +430,7 @@ nginx:1.21 镜像名称
 docker exec -it nginx bash
 ```
 
-- docker exec ：进入容器内部，执行一个命令
+- exec ：进入容器内部
 
 - -it : 给当前进入的容器创建一个标准输入、输出终端，允许我们与容器交互
 
@@ -449,8 +447,6 @@ docker exec -it nginx bash
 nginx的环境、配置、运行文件  都在这个文件系统中，包括我们要修改的html文件。
 
 查看DockerHub网站中的nginx页面，可以知道nginx的html目录位置在`/usr/share/nginx/html`
-
-
 
 ```sh
 cd /usr/share/nginx/html
@@ -480,7 +476,7 @@ sed -i -e 's#Welcome to nginx#传智教育欢迎您#g' -e 's#<head>#<head><meta 
 
 ### 2.2.4.小结
 
-docker run命令的常见参数
+docker run的常见参数
 
 --name 指定容器名称
 
@@ -504,6 +500,12 @@ docker ps
 
 docker ps -a 查看所有容器，包括已经停止的
 
+运行后退出删除容器
+
+```
+docker run -it --rm busybox sh
+```
+
 
 
 ### 2.2.5 安装pg
@@ -512,23 +514,17 @@ docker ps -a 查看所有容器，包括已经停止的
 docker run --name postgres -e POSTGRES_PASSWORD=root -p 5432:5432 -v /root/db/postgres/data:/var/lib/postgresql/data -d postgres
 ```
 
-   
-
-
-
-
-
-
+  
 
 ## 2.3.数据卷（容器数据管理）
 
 在之前的nginx案例中，修改nginx的html页面时，需要进入nginx内部。并且因为没有编辑器，修改文件也很麻烦。
 
-这就是因为容器与数据（容器内文件）耦合带来的后果。
+这就是因为 容器与数据（容器内文件）耦合带来的后果。
 
 ![image-20210731172440275](docker/image-20210731172440275.png)
 
-要解决这个问题，必须将数据与容器解耦，这就要用到数据卷了。
+要解决这个问题，必须将数据与容器解耦，这就要用到**数据卷**了。
 
 
 
@@ -546,11 +542,9 @@ docker run --name postgres -e POSTGRES_PASSWORD=root -p 5432:5432 -v /root/db/po
 
 
 
-### 2.3.2.数据集操作命令
+### 2.3.2.数据卷操作命令
 
-
-
-数据卷操作的基本语法如下：
+基本语法如下：
 
 ```sh
 docker volume [COMMAND]
@@ -570,15 +564,13 @@ docker volume命令是数据卷操作，根据命令后跟随的command来确定
 
 **需求**：创建一个数据卷，并查看数据卷在宿主机的目录位置
 
-① 创建 数据卷
+创建 数据卷
 
 ```sh
 docker volume create html
 ```
 
-
-
-② 查看 所有数据
+查看 所有数据
 
 ```sh
 docker volume ls
@@ -590,9 +582,7 @@ docker volume ls
 
 
 
-
-
-③ 查看 数据卷详细信息卷
+查看 数据卷 详细信息
 
 ```sh
 docker volume inspect html
@@ -614,7 +604,7 @@ docker volume inspect html
 
 数据卷的作用
 
-将 容器与数据 分离，解耦合，方便操作容器内数据，保证数据安全
+将 容器 与 数据 分离，解耦，方便操作容器内数据，保证数据安全
 
 
 
@@ -703,27 +693,26 @@ vi index.html
 
 
 
-
-
 **需求**：创建并运行一个MySQL容器，将宿主机目录直接挂载到容器
 
-
-
-实现思路如下：
-
-1）在将课前资料中的mysql.tar文件上传到虚拟机，通过load命令加载为镜像
-
-2）创建目录/tmp/mysql/data
-
-3）创建目录/tmp/mysql/conf，将课前资料提供的hmy.cnf文件上传到/tmp/mysql/conf
-
-4）去DockerHub查阅资料，创建并运行MySQL容器，要求：
-
-① 挂载/tmp/mysql/data到mysql容器内数据存储目录
-
-② 挂载/tmp/mysql/conf/hmy.cnf到mysql容器的配置文件
-
-③ 设置MySQL密码
+```
+version: '3'
+services:
+  mysql:
+    image: mysql:8.0.33
+    container_name: mysql-8.0.33
+    restart: always
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - TZ=Asia/Shanghai
+    volumes:
+      - /home/dockerdata/mysql/data:/var/lib/mysql 
+      - /home/dockerdata/mysql/conf.d:/etc/mysql/conf.d
+      - /home/dockerdata/mysql/log:/var/log/mysql
+      - /etc/localtime:/etc/localtime:ro
+```
 
 
 
@@ -732,7 +721,7 @@ vi index.html
 docker run的命令中通过 -v 参数挂载文件或目录到容器中：
 
 - -v volume名称:容器内目录
-- -v 宿主机文件:容器内文
+- -v 宿主机文件:容器内文件
 - -v 宿主机目录:容器内目录
 
 数据卷挂载与目录直接挂载的
@@ -740,13 +729,7 @@ docker run的命令中通过 -v 参数挂载文件或目录到容器中：
 - 数据卷挂载耦合度低，由docker来管理目录，但是目录较深，不好找
 - 目录挂载耦合度高，需要我们自己管理目录，不过目录容易寻找查看
 
-
-
-
-
-
-
-# 3.Dockerfile自定义镜像
+# 3 Dockerfile自定义镜像
 
 常见的镜像在DockerHub就能找到，但 自己写的项目  就必须自己 构建镜像。
 
@@ -756,15 +739,13 @@ docker run的命令中通过 -v 参数挂载文件或目录到容器中：
 
 镜像是将 **应用程序及其需要的系统函数库、环境、配置、依赖** 打包而成。
 
-我们以MySQL为例，来看看镜像的组成结构：
+以MySQL为例，来看看镜像的组成结构：
 
 ![image-20210731175806273](docker/image-20210731175806273.png)
 
 
 
 简单来说，镜像 就是在  **系统函数库、运行环境基础上，添加应用程序文件、配置文件、依赖文件等组合**，然后编写好 启动脚本 打包在一起形成的文件。
-
-
 
 我们要 构建镜像，就是实现上述 打包的过程。
 
@@ -774,13 +755,7 @@ docker run的命令中通过 -v 参数挂载文件或目录到容器中：
 
 构建自定义的镜像时，并不需要一个个文件去拷贝，打包。
 
-只需要告诉Docker，
-
-镜像的组成，需要哪些BaseImage、需要拷贝什么文件、需要安装什么依赖、启动脚本是什么，
-
-将来Docker会帮助我们构建镜像。
-
-
+只需要告诉Docker，镜像的组成，需要哪些BaseImage、需要拷贝什么文件、需要安装什么依赖、启动脚本是什么，将来Docker会帮助我们构建镜像。
 
 而描述上述信息的文件 就是 Dockerfile文件。
 
@@ -790,17 +765,11 @@ docker run的命令中通过 -v 参数挂载文件或目录到容器中：
 
 ![image-20210731180321133](docker/image-20210731180321133.png)
 
-
-
 更新详细语法说明，请参考官网文档： https://docs.docker.com/engine/reference/builder
 
 
 
-
-
 ## 3.3.构建Java项目
-
-
 
 ### 3.3.1.基于Ubuntu构建Java项目
 
@@ -1146,12 +1115,6 @@ gateway：
 docker-compose up -d
 ```
 
-
-
-
-
-
-
 # 5.Docker镜像仓库 
 
 
@@ -1188,7 +1151,7 @@ docker push 192.168.150.101:8080/nginx:1.0
 docker pull 192.168.150.101:8080/nginx:1.0 
 ```
 
-[TOC]
 
-[TOC]
+
+
 

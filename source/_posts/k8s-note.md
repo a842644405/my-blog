@@ -2186,7 +2186,45 @@ data:
 
 
 
+## 常见报错和问题
 
+network: error getting ClusterInformation: connection is unauthorized: Unauthorized]
+
+```
+kubectl rollout restart ds -n kube-system calico-node
+```
+
+
+
+pod的状态
+
+```
+error running pending  Completed ImagePullBackOff ContainerCreating
+```
+
+
+
+临时容器 使用 nc 测试端口连通性
+
+```yml
+kubectl run mysql-test \
+  --image=harbor:5000/busybox:latest \
+  --restart=Never \
+  --overrides='
+  {
+    "spec": {
+      "imagePullSecrets": [
+        {
+          "name": "registry-user-pwd-secret"
+        }
+      ]
+    }
+  }' \
+  --command -- nc -zv ry-cloud-mysql-service 3306
+ 
+ k logs pods/mysql-test
+ry-cloud-mysql-service (10.233.53.108:3306) open
+```
 
 
 
