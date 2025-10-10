@@ -39,8 +39,8 @@ mkdir learn-terraform-aws-instance
 vim main.tf
 provider "aws" {
   region = "us-east-1"
-  access_key = ""  # AWS 访问密钥
-  secret_key = ""  # AWS 秘钥
+    # AWS 访问密钥
+    # AWS 秘钥
 }
 
 resource "aws_vpc" "web-vpc" {
