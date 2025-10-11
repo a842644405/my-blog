@@ -132,8 +132,5 @@ resource "aws_security_group" "allow_ssh" {
 
 
 
-![image-20250324120000118](terraform/image-20250324120000118.png)
->>>>>>> 8ca6e61 (update 20251010)
-
 
 
