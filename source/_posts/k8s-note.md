@@ -51,7 +51,8 @@ k8s 集群由 **Master 控制平面** 和 **Worker 节点** 组成，遵循 声�
     每台机器上都运行一个 kube-proxy 服务，它监听 API server 中 service 和 endpoint 的变化情况，并通过 iptables 等来为服务配置负载均衡（仅支持 TCP 和 UDP）。
     kube-proxy 可以直接运行在物理机上，也可以以 static pod 或者 daemonset 的方式运行。
   
-- **容器运行时**  
+- **容器运行时**
+  
   - 如 docker、containerd、CRI-O，通过 CRI 接口与 kubelet 交互。  
 
 ---
@@ -170,7 +171,7 @@ k8s 集群由 **Master 控制平面** 和 **Worker 节点** 组成，遵循 声�
    - [设计文档](https://github.com/k8s/community/tree/master/contributors/design-proposals)  
 3. **源码分析**：研究核心控制器逻辑。  
 
-# k8S
+# k8S实践
 
 k8s is an open source **container orchestration engine** for automating deployment, scaling, and management of containerized applications. 
 
@@ -203,6 +204,21 @@ k8s is an open source **container orchestration engine** for automating deployme
 ![image-20240416230722588](k8s-note/image-20240416230722588.png?lastModify=1716449400)
 
 ![image-20240416230934803](k8s-note/image-20240416230934803.png?lastModify=1716449400)
+
+## pod启动顺序
+
+ kubelet 视角的完整流程：
+
+1. 接收 Pod 定义 from API Server
+2. 创建 Pod 沙箱（Pause 容器）
+   ↓
+3. 启动 Init 容器（在 Pause 的命名空间中）
+   ↓
+4. 启动主容器（在 Pause 的命名空间中）
+   ↓
+5. 设置网络、存储等共享资源
+   ↓
+6. 更新 Pod 状态为 Running
 
 ## pod创建方式及流程
 
