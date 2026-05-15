@@ -1635,7 +1635,7 @@ spec:
 #### 1. 临时卷（Ephemeral Volumes）
 生命周期与 Pod 绑定，随 Pod 销毁而删除。
 
-- **[emptyDir](https://k8s.io/zh-cn/docs/concepts/storage/volumes/#emptydir)**  
+- **[emptyDir](https://k8s.io/zh-cn/docs/concepts/storage/volumes/#emptydir)**
   - **用途**：临时存储（如缓存、临时文件）。  
   - **特点**：Pod 启动时创建，Pod 删除时销毁。
 
@@ -2246,6 +2246,8 @@ ry-cloud-mysql-service (10.233.53.108:3306) open
 
 # helm
 
+### 概念
+
 package manager for k8s, like yum 
 
 ![image-20240523162326257](k8s-note/image-20240523162326257.png)
@@ -2259,6 +2261,10 @@ package manager for k8s, like yum
 | Template   | 使用Go模板语言生成k8s对象的定义文件                          |
 
 ![image-20240523162809528](k8s-note/image-20240523162809528.png)
+
+
+
+### helm安装
 
 ```sh
 #helm下载
@@ -2277,54 +2283,12 @@ source /etc/profiles
 # helm  version
 ```
 
-```sh
-#仓库管理
-#添加仓库 
-helm repo add az-stable http://mirror.azure.cn/k8s/charts/
-helm repo add bitnami https://charts.bitnami.com/bitnami
-
-#查看仓库 
-helm repo list
-NAME            URL
-az-stable       http://mirror.azure.cn/k8s/charts/
-bitnami         https://charts.bitnami.com/bitnami
-
-#更新仓库属性信息
-helm repo update
-
-#从自定义仓库中获取软件源信息 
-helm search repo redis
-
-#查看chart的所有信息 
-helm show all bitnami/redis
-```
-
-```sh
-#安装chart 
-helm install mysql-helm bitnami/mysql
-#删除应用 
-helm uninstall my-helm 
-#更新应用 
-helm install my-helm bitnami/redis --set master.persistence.enabled=false --set replica.persistence.enabled=false 
-#查看效果 
-helm list 
-
-kubectl get pod
-```
-
--------
-
-Helm 是 k8s 的包管理工具，可以帮助你简化应用的部署和管理。
-
-### Helm 常用命令及示例
+### 使用命令及示例
 
 1. 初始化 Helm 客户端
-    如果你使用的是 Helm 3 及以上版本，客户端初始化已经不再需要，因为 Helm 3 移除了 Tiller（服务器端组件）。
-
-  
+    Helm 3 及以上版本，客户端初始化已经不再需要，因为 Helm 3 移除了 Tiller（服务器端组件）。
 
 2. 添加 Chart 仓库
-    添加一个 Helm Chart 仓库以便下载和使用官方或第三方的 Charts。
 
 ```
 helm repo add stable https://charts.helm.sh/stable
@@ -2332,46 +2296,106 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 ```
 
 
-3. 更新本地 Chart 仓库索引
-    更新本地存储的 Chart 仓库索引以获取最新的 Charts。
-
-  ```
-  helm repo update
-  ```
-
-  
+3. 更新本地 Chart 仓库索引 以获取最新的 Charts
+   
+    ```
+    helm repo update
+    ```
 
 4. 搜索 Chart
-    搜索特定名称的 Chart。
 
-  ```
-  helm search repo redis
-  ```
+```
+helm search repo prometheus
+NAME                                                    CHART VERSION   APP VERSION     DESCRIPTION
+prometheus-community/kube-prometheus-stack              69.4.1          v0.80.0         kube-prometheus-stack collects Kubernetes manif...
+prometheus-community/prometheus                         27.4.0          v3.1.0          Prometheus is a monitoring system and time seri...
 
-  这将列出所有包含 "redis" 关键字的 Charts。
+```
+
+| **项目**          | **CHART VERSION**                | **APP VERSION**                    |
+| :---------------- | :------------------------------- | :--------------------------------- |
+| 定义在            | `Chart.yaml → version`           | `Chart.yaml → appVersion`          |
+| 代表什么          | **Helm Chart 本身的版本**        | **Chart 内部部署的应用版本**       |
+| 变化原因          | 模板 / values / 结构改动         | 应用镜像升级（如 Prometheus 升级） |
+| 是否影响 K8s 资源 | ✅ 会                             | ❌ 不会                             |
+| 是否用于升级判断  | ✅ Helm 用它判断 Chart 是否有变化 | ❌ Helm 不直接使用                  |
+| 举例              | `65.5.1 → 65.6.0`                | `0.76.1 → 0.77.0`                  |
 
 5. 查看 Chart 详细信息
-查看某个 Chart 的详细信息，包括可用版本和描述。
 
-```
-helm show chart bitnami/redis
-```
-
-
+  ```
+  helm show chart bitnami/redis
+  helm show chart prometheus-community/prometheus
+  ```
 
 6. 安装 Chart
-安装一个 Chart，并指定 Release 名称和其他配置参数。
+
+方式一：直接在线安装（最快捷，适合有外网的环境）
+
+这是日常开发或测试环境最高频的操作。通过事先添加官方仓库，直接利用 `--version`参数锁定版本进行安装。
 
 ```
-helm install my-redis bitnami/redis --version 20.7.1
-my-redis 是 Release 名称。
-bitnami/redis 是 Chart 名称。
---version 20.7.1 指定要安装的具体版本。
+# 1. 添加官方仓库（仅需执行一次）
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+# 2. 更新仓库索引，确保本地能识别到该版本
+helm repo update
+
+# 3. 直接指定版本安装
+helm install my-prometheus prometheus-community/kube-prometheus-stack \
+  --version 27.4.0 \
+  -n monitoring \
+  --create-namespace
 ```
+
+💡 **适用场景**：个人测试、CI/CD 流水线中直接拉取公网资源的场景。
+
+------
+
+方式二：下载 TGZ 包本地安装（企业离线部署标配）
+
+在生产环境中，出于网络安全管控（K8s 集群节点通常无外网权限），企业通常要求**预先下载包，再进行本地安装**。
+
+```
+# 1. 在外网机器上下载指定版本的 Chart 包
+helm pull prometheus-community/kube-prometheus-stack --version 27.4.0
+
+# 2. 将生成的 kube-prometheus-stack-27.4.0.tgz 拷贝到内网生产服务器
+
+# 3. 在内网服务器执行本地安装
+helm install my-prometheus ./kube-prometheus-stack-27.4.0.tgz \
+  -n monitoring \
+  --create-namespace
+```
+
+💡 **适用场景**：严格隔离的内网生产环境、需要对部署包进行离线病毒扫描或安全校验的场景。
+
+------
+
+方式三：源码解压后安装（适合需要做深度定制改造）
+
+当你发现官方 Chart 的模板（Templates）或依赖子项无法满足你的集群特性，需要在安装前**修改文件内容**时，采用此方式。
+
+```
+# 1. 下载并解压指定版本的包
+helm pull prometheus-community/kube-prometheus-stack --version 27.4.0 --untar
+
+# 2. 进入目录，根据你的需求修改文件
+# 例如：修改默认的 values.yaml 或者调整 templates/ 下的资源清单
+vim kube-prometheus-stack/values.yaml
+
+# 3. 直接指向本地目录进行安装
+helm install my-prometheus ./kube-prometheus-stack \
+  -n monitoring \
+  --create-namespace
+```
+
+💡 **适用场景**：需要修改官方 Chart 原始模板、注入特定 Sidecar、或改变资源依赖关系的进阶操作。
+
+
 
 
 7. 列出已安装的 Releases
-    列出当前命名空间下的所有已安装的 Releases。
 
   ```
   helm list
@@ -2379,15 +2403,15 @@ bitnami/redis 是 Chart 名称。
   ```
 
 8. 升级 Release
-升级已安装的 Release 到新版本或修改配置。
 
 ```
 helm upgrade my-redis bitnami/redis --version 20.8.0
 ```
 
 
+
+
 9. 回滚 Release
-    回滚到之前的版本。
 
   ```
   helm history my-redis -n default
@@ -2483,28 +2507,7 @@ helm push my-chart.tar.gz oci://registry-1.docker.io/my-repo
  helm lint my-chart
 ```
 
-示例笔记汇总
-添加和更新仓库
 
-### 添加 Bitnami 仓库
-
-helm repo add bitnami https://charts.bitnami.com/bitnami
-
-### 更新本地仓库索引
-helm repo update
-
-搜索和查看 Chart
-
-### 搜索 Redis 相关的 Chart
-helm search repo redis
-
-### 查看 Redis Chart 的详细信息
-helm show chart bitnami/redis
-安装和管理 Release
-
-
-### 安装 Redis Chart
-helm install my-redis bitnami/redis --version 20.7.1
 
 ### 列出所有已安装的 Releases
 helm list
@@ -2539,5 +2542,5 @@ helm lint my-chart
 ### 打包 Chart
 helm package my-chart
 
----
+
 

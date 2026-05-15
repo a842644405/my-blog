@@ -176,7 +176,7 @@ VPN远程访问内部资源，用户多为单位工作人员
 
 EPEL (**Extra Packages for Enterprise Linux**) is a third-party repository of packages for the Fedora-based and CentOS/RHEL-based Linux distributions. It provides additional software packages that are not included in the default package repositories of these distributions.
 
-# Linux命令
+# Linux常用命令
 
 ## 快捷键
 
@@ -292,7 +292,7 @@ ctrl + 右 alt f 向右跳一个单词
 
 /var 这个目录的内容是经常变动的，/var下有/var/log 这是用来存放系统日志的目录。/var/www目录是定义Apache服务器站点存放目录；/var/lib 用来存放一些库文件，比如MySQL的，以及MySQL数据库的的存放地；
 
-**普通文件、目录文件、连接文件和特殊文件**
+**普通文件 -、目录文件 d、连接文件和特殊文件**
 
 ## file命令
 
@@ -391,7 +391,10 @@ cd  进入当前用户目录
 
 cd ./ 当前 	cd ..上一级
 
-
+```sh
+scp -r /dir root@ip:/dir
+scp file1 root@ip:/dir1/
+```
 
 ## HOME目录
 
@@ -428,21 +431,6 @@ SSH登陆终端后，默认是 用户的HOME目录
 .. 上级目录      ../../  上级的上级目录
 
 ~  用户的HOME目录 
-
-
-
-## du disk usage
-
-```sh
-# 统计隐藏文件或目录
-du -sh .[^.]*
-
-# 统计所有文件和目录
-du -sh .[^.]* *
-
-# 结合 `sort -h`，可以快速得到比较大的目录
-du -sh .[^.]* * |sort -h
-```
 
 
 
@@ -1325,34 +1313,6 @@ State状态值
 10. **TIME_WAIT**：表示主动关闭连接的一方已经收到了对方的确认，但还没有释放连接资源。此状态会持续一段时间，以确保对方收到自己发送的 FIN 包。
 11. **CLOSED**：表示连接已经关闭，没有任何活动。这是一个空闲状态。
 
-## ps
-
-ps -ef 查看全部进程信息，搭配grep做过滤：`ps -ef | grep xxx`
-
-```
-UID：进程所属的用户ID
-PID：进程的进程号ID
-PPID：进程的父ID（启动此进程的其它进程）
-C：此进程的CPU占用率（百分比）
-STIME：进程的启动时间
-TTY：启动此进程的终端序号，如显示?，表示非终端启动
-TIME：进程占用CPU的时间
-CMD：进程对应的名称或启动路径或启动命令
-```
-
-```sh
-#查看进程执行命令
-ps -p 进程ID -o cmd
-或者
-ll /proc/1270361/exe
-lrwxrwxrwx 1 root root 0 Apr 12 17:20 /proc/1270361/exe -> /usr/local/jdk8/bin/java
-```
-
-
-杀死进程 kill -9 pid
-
-![image-20221027221303037](https://image-set.oss-cn-zhangjiakou.aliyuncs.com/img-out/2022/10/27/20221027221303.png)
-
 
 
 ## wget
@@ -1392,6 +1352,42 @@ curl cip.cc
 #先切换到对应的目录再下载文件
 curl -O https://mirrors.tuna.tsinghua.edu.cn/virtualbox/LATEST.TXT
 ```
+
+
+
+## 进程和线程
+
+ulimit -u（用户级）：是“第一道关卡”，限制单个用户或会话能创建的进程数。
+
+threads-max（系统级）：是“总闸”，限制整个系统所有线程的总和。
+
+## ps
+
+ps -ef 查看全部进程信息，搭配grep做过滤：`ps -ef | grep xxx`
+
+```
+UID：进程所属的用户ID
+PID：进程的进程号ID
+PPID：进程的父ID（启动此进程的其它进程）
+C：此进程的CPU占用率（百分比）
+STIME：进程的启动时间
+TTY：启动此进程的终端序号，如显示?，表示非终端启动
+TIME：进程占用CPU的时间
+CMD：进程对应的名称或启动路径或启动命令
+```
+
+```sh
+#查看进程执行命令
+ps -p 进程ID -o cmd
+或者
+ll /proc/1270361/exe
+lrwxrwxrwx 1 root root 0 Apr 12 17:20 /proc/1270361/exe -> /usr/local/jdk8/bin/java
+```
+
+
+杀死进程 kill -9 pid
+
+![image-20221027221303037](https://image-set.oss-cn-zhangjiakou.aliyuncs.com/img-out/2022/10/27/20221027221303.png)
 
 
 
@@ -1443,7 +1439,22 @@ lsblk
 echo "/dev/vdb1 /jydata ext4 defaults 0 0" | sudo tee -a /etc/fstab
 ```
 
+## du disk usage
 
+```sh
+# 统计隐藏文件或目录
+du -sh .[^.]*
+
+# 统计所有文件和目录
+du -sh .[^.]* *
+
+# 结合 `sort -h`，可以快速得到比较大的目录
+du -sh .[^.]* * |sort -h
+```
+
+## free
+
+free -h
 
 ## df   	disk free
 
@@ -1507,13 +1518,16 @@ sar -n DEV 3 2
 
 -c compress
 
+```
+tar -zcvf a.zip a
+```
+
 
 
 `zip [-r] 参数1 参数2 参数N`
 
 ```shell
 zip test.zip a.txt b.txt c.txt 	#将3个txt压缩到test.zip
-
 zip -r test.zip test test2 a.txt #将test、test2两个文件夹和a.txt文件，压缩到test.zip文件内
 ```
 
@@ -1564,6 +1578,11 @@ unzip test.zip -d /home/itheima
 语法：`su [-] [用户]`
 
 ![image-20221027222021619](https://image-set.oss-cn-zhangjiakou.aliyuncs.com/img-out/2022/10/27/20221027222021.png)
+
+```
+su -
+
+```
 
 
 
@@ -1735,3 +1754,22 @@ VARIABLE_NAME=value：设置临时环境变量的值。例如，LANG=en_US.UTF-8
 unset VARIABLE_NAME：删除临时环境变量或当前用户的永久环境变量。
 编辑相应的配置文件，将环境变量的定义删除。
 ```
+
+## Available Page Cache（文件缓存）释放
+
+```
+# 1. 清理 PageCache（文件缓存，效果最明显）
+sync && echo 1 > /proc/sys/vm/drop_caches
+
+# 2. 清理 Slab 对象（目录项、inode等内核缓存）
+sync && echo 2 > /proc/sys/vm/drop_caches
+
+# 3. 清理所有缓存（PageCache + Slab，大扫除） 一般直接使用3即可
+sync && echo 3 > /proc/sys/vm/drop_caches
+
+一定要带上 sync：作用是强迫系统把内存中还没写完硬盘的数据先落盘，防止数据丢失。
+流量低谷期操作：如果你的服务白天访问量巨大，尽量把这种清理操作放在凌晨两三点业务低峰期去做。
+```
+
+
+
