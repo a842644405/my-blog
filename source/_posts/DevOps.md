@@ -471,7 +471,7 @@ CI/CD可以理解为：
 
 ##### 5.3.1 配置源码拉取地址
 
-Jenkins需要将Gitlab上存放的源码 存储到Jenkins服务所在磁盘的本地
+Jenkins拉取Gitlab上的源码 到Jenkins服务 所在磁盘
 
 - 配置任务源码拉取的地址
 
@@ -584,7 +584,7 @@ nohup java -jar /usr/local/projects/target/test.jar &> /usr/local/projects/test.
 
 #### 6.1 持续集成
 
-为了实现 在代码集成到主干分支时 能够 自动推送并部署到基于 Docker 的测试环境，我们需要添加相应的 Docker 配置文件 和 自动化脚本，以确保每次代码更新后，程序能够在测试环境中自动运行起来。
+为了实现在 代码合并到主干分支时 能够 自动推送并部署到基于 Docker 的测试环境，我们需要添加相应的 Docker 配置文件 和 自动化脚本，以确保每次代码更新后，程序能够在测试环境中自动运行起来。
 
 添加Dockerfile文件
 
@@ -1184,6 +1184,7 @@ docker pull 192.168.101.253:80/repo/test:v1.0.0
 
 ```sh
 #当前目录默认为工程目录workspace/test
+cd /var/jenkins_home/workspace/test/
 mv target/*.jar docker/
 docker build -t test:$tag docker/
 docker tag test:$tag 192.168.101.253:80/repo/test:$tag
@@ -1199,7 +1200,7 @@ docker push 192.168.101.253:80/repo/test:$tag
 
 添加脚本文件到目标服务器，再通过Publish Over SSH插件让目标服务器执行脚本。
 
-- 编写deploy.sh，添加到目标服务器test-82
+- 编写deploy.sh（目标服务器test-82中执行）
 
   ```
   cd /usr/local/bin
@@ -1259,9 +1260,9 @@ docker push 192.168.101.253:80/repo/test:$tag
 
 #### 9.1 Jenkins流水线任务介绍
 
-自由风格构建的项目，每个步骤流程都要通过不同的方式设置，并且构建过程中整体流程是不可见的，无法确认每个流程花费的时间，并且问题不方便定位问题。
+自由风格构建的项目，每个步骤流程都要通过不同的方式设置，并且构建过程中整体流程是不可见的，无法确认每个流程花费的时间，并且不方便定位问题。
 
-Jenkins的Pipeline可以让项目的发布整体流程可视化，明确执行的阶段，可以快速的定位问题。并且整个项目的生命周期可以通过一个Jenkinsfile文件管理，而且Jenkinsfile文件是可以放在项目中维护。
+Pipeline流水线可以让项目的发布整体流程可视化，明确执行的阶段，可快速定位问题。并且整个项目的生命周期可通过一个Jenkinsfile文件管理，而且Jenkinsfile可以放在项目中维护。
 
 所以Pipeline 相对 自由风格 或者其他的项目风格更容易操作。
 
@@ -1766,35 +1767,7 @@ jenkins生成的流水线脚本是单引号，需要修改成
 
 #### 10.1 Kubernetes介绍
 
-Kubernetes用于 **管理云平台中多个主机上的容器化应用**，目标是 让部署容器化的应用简单并且高效（powerful），Kubernetes提供了应用部署，规划，更新，维护的一种机制。
-
-主要能帮助我们完成：
-
-- 服务发现和负载均衡
-
-  Kubernetes 可以使用 DNS 名称或自己的 IP 地址公开容器，如果进入容器的流量很大， Kubernetes 可以负载均衡并分配网络流量，从而使部署稳定。
-
-- 存储编排
-
-  Kubernetes 允许你自动挂载你选择的存储系统，比如本地存储，类似Docker的数据卷。
-
-- 自动部署和回滚
-
-  你可以使用 Kubernetes 描述已部署容器的所需状态，它可以以受控的速率将实际状态 更改为期望状态。Kubernetes 会自动帮你根据情况部署创建新容器，并删除现有容器给新容器提供资源。
-
-- 自动完成装箱计算
-
-  Kubernetes 允许你设置每个容器的资源，比如CPU和内存。
-
-- 自我修复
-
-  Kubernetes 重新启动失败的容器、替换容器、杀死不响应用户定义的容器，并运行状况检查的容器。
-
-- 秘钥与配置管理
-
-  Kubernetes 允许你存储和管理敏感信息，例如密码、OAuth 令牌和 ssh 密钥。你可以在不重建容器镜像的情况下部署和更新密钥和应用程序配置，也无需在堆栈配置中暴露密钥。
-
-
+Kubernetes用于 **管理云平台中多个主机上的容器化应用**，目标是 让部署容器化的应用简单并且高效
 
 #### 10.2 Kubernetes架构
 
@@ -1804,7 +1777,7 @@ Kubernetes 搭建需要至少两个节点，一个Master负责管理，一个Sla
 | :----------------------------------------------------------: |
 | ![image-20211210114507638](DevOps/image-20211210114507638.png) |
 
-从图中可以看到各个组件的基本功能：
+各个组件的基本功能：
 
 - API Server：作为K8s通讯的核心组件，K8s内部交互以及接收发送指令的组件。
 - controller-manager：作为K8s的核心组件，主要做资源调度，根据集群情况分配资源
@@ -1815,13 +1788,9 @@ Kubernetes 搭建需要至少两个节点，一个Master负责管理，一个Sla
 - kube-proxy：负责处理其他Slave或客户端的请求。
 - Pod：可以理解为就是运行的容器
 
-
-
-
-
 #### 10.3 Kubernetes安装
 
-这里会采用https://kuboard.cn/提供的方式安装K8s，安装单Master节点
+这里 采用https://kuboard.cn/提供的方式安装K8s，安装单Master节点
 
 - 要求使用Centos7.8版本：https://vault.centos.org/7.8.2003/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso
 - 至少2台 **2核4G** 的服务器
@@ -2574,14 +2543,13 @@ spec:
 修改Jenkinsfile实现基于最新提交点实现持续集成效果，将之前引用${tag}的全部去掉
 
 ```json
-// 所有的脚本命令都放在pipeline中
 pipeline{
 	// 指定任务再哪个集群节点中执行
 	agent any
 
-	// 声明全局变量，方便后面使用
+	// 声明全局变量
 	environment {
-		harborUser = 'admin'
+			 harborUser = 'admin'
         harborPasswd = 'Harbor12345'
         harborAddress = '192.168.11.102:80'
         harborRepo = 'repo'

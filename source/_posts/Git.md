@@ -6,20 +6,11 @@ title: Git
 
 # Git 分布式版本控制工具
 
-## 课程内容
-
-- Git概述
-- Git代码托管服务
-- Git常用命令
-- 在IDEA中使用Git
-
-
-
 ## 1. 前言
 
-### 1.1 什么是Git
+### 1.1 Git是什么
 
-Git是一个分布式版本控制工具，主要用于管理开发过程中的源代码文件（Java类、xml文件、html页面等）
+一个分布式版本控制工具，主要用于管理开发过程中的源代码文件（Java类、xml文件、html页面等）
 
 在IDEA开发工具中可以集成Git（后面会讲解Git安装和集成过程）：
 
@@ -43,7 +34,7 @@ Git是一个分布式版本控制工具，主要用于管理开发过程中的�
 - CVS
 - VSS
 
-### 1.2 使用Git能做什么
+### 1.2 Git能做什么
 
 - 代码回溯：Git在管理文件过程中会记录日志，方便回退到历史版本
 - 版本切换：Git存在分支的概念，一个项目可以有多个分支（版本），可以任意切换
@@ -54,10 +45,10 @@ Git是一个分布式版本控制工具，主要用于管理开发过程中的�
 
 ### 2.1 Git简介
 
-Git 是一个分布式版本控制工具，通常用来对软件开发过程中的源代码文件进行管理。通过Git 仓库来存储和管理这些文件，Git 仓库分为两种：
+Git 是一个分布式版本控制工具。通过Git 仓库来存储和管理这些文件，Git 仓库分为两种：
 
-- 本地仓库：开发人员自己电脑上的 Git 仓库
-- 远程仓库：远程服务器上的 Git 仓库
+- 本地仓库：开发人员电脑的 Git 仓库
+- 远程仓库：远程服务器的 Git 仓库
 
 <img src="Git/image-20210924173708313.png" alt="image-20210924173708313" style="zoom: 50%;" />
 
@@ -103,7 +94,7 @@ Git安装目录结构如下：
 
 
 
-## 3. Git代码托管服务
+## 3. Git代码托管服务平台
 
 ### 3.1 常用的Git代码托管服务
 
@@ -213,29 +204,34 @@ https://gitee.com/ChuanZhiBoKe/myGitRepo.git
 
 ### 4.1 Git全局设置
 
-安装Git后 首先要做的事情是 设置用户名称和email地址。这是非常重要的，因为每次Git提交都会使用该用户信息。在Git 命令行中执行下面命令：
+安装Git后 首先要做的事情是 设置用户名称和email地址。
+
+这是非常重要的，因为每次Git提交都会使用该用户信息。
+
+在Git 命令行中执行下面命令：
 
 **设置用户信息** 
 
-  git config --global user.name "itcast"
+  
 
-  git config --global user.email "hello@itcast.cn"
+```
+git config --global user.name "vj"
+git config --global user.email "842644405@qq.com"
+```
 
-user.name和user.email 并不是注册码云账号时使用的用户名和邮箱，可任意设置。
+user.name和user.email 可任意设置。
 
 **查看配置信息**
 
-  git config --list
-
-
+```
+git config --list
+```
 
 ![image-20210926092820321](Git/image-20210926092820321.png)
 
 
 
 ### 4.2 获取Git仓库
-
-要使用Git对我们的代码进行管理，首先需要获得Git仓库。
 
 获取Git仓库通常有两种方式：
 
@@ -453,23 +449,68 @@ git push hexo main
 
 解决此问题可以在git pull命令后加入参数--allow-unrelated-histories
 
-### 4.7 分支操作
+### 4.7 分支
 
-分支是Git 使用过程中非常重要的概念。使用分支意味着你可以把你的工作从开发主线上分离开来，以免影响开发主线。
+- **分支**：指向某个提交（commit）的可移动指针。Git 默认主分支名为 `master` 或 `main`。
+- **HEAD**：特殊指针，指向当前所在的本地分支（或直接指向某次提交）。
+- **工作流**：不同分支独立开发，完成后合并回主分支，实现并行开发与版本隔离。
 
 本地仓库和远程仓库中都有分支，同一个仓库可以有多个分支，各个分支相互独立，互不干扰。
 
-通过git init 命令创建本地仓库时默认会创建一个master分支。
 
 
+git init 创建本地仓库时默认会创建一个master分支。
 
-本节我们会学习关于分支的相关命令，具体命令如下：
+```shell
+VJ@ASUS MINGW64 ~/Desktop/test-branch (master)
+$ git diff main master
+diff --git a/main-1 b/main-1
+deleted file mode 100644
+index d00491f..0000000
+--- a/main-1
++++ /dev/null
+@@ -1 +0,0 @@
+-1
+diff --git a/master-1 b/master-1
+new file mode 100644
+index 0000000..e25c557
+--- /dev/null
++++ b/master-1
+@@ -0,0 +1,2 @@
++hh
++xx
 
-- git branch                                     查看分支
-- git branch [name]                       创建分支
-- git checkout [name]                    切换分支
-- git push [shortName] [name]   推送至远程仓库分支
-- git merge [name]                        合并分支
+VJ@ASUS MINGW64 ~/Desktop/test-branch (master)
+$ ls
+README.md  master-1
+
+$ git switch main
+Switched to branch 'main'
+
+VJ@ASUS MINGW64 ~/Desktop/test-branch (main)
+$ ls
+README.md  main-1
+
+```
+
+常用操作
+
+| 操作                   | 命令                                                         | 说明                              |
+| :--------------------- | :----------------------------------------------------------- | :-------------------------------- |
+| 查看本地分支           | `git branch`                                                 | 当前分支前有 `*` 标记             |
+| 查看远程分支           | `git branch -r`                                              |                                   |
+| 查看全部分支（含远程） | `git branch -a`                                              |                                   |
+| 创建分支               | `git branch <branch-name>`                                   | 基于当前所在提交创建              |
+| 创建并切换             | `git checkout -b <branch-name>` 或 `git switch -c <branch-name>` | 推荐 `switch`（Git 2.23+）        |
+| 切换分支               | `git checkout <branch-name>` 或 `git switch <branch-name>`   | 切换前需保证工作区干净            |
+| 合并分支到当前分支     | `git merge <branch-name>`                                    | 将 `<branch-name>` 的更新合并进来 |
+| 删除本地分支           | `git branch -d <branch-name>`                                | 已合并时安全删除                  |
+| 强制删除分支           | `git branch -D <branch-name>`                                | 即使未合并也删除                  |
+| 删除远程分支           | `git push origin --delete <branch-name>`                     |                                   |
+| 推送本地分支到远程     | `git push origin <branch-name>`                              | 远程自动创建同名分支              |
+| 关联远程分支           | `git push -u origin <branch-name>`                           | 设置上游，后续可直接 `git push`   |
+
+
 
 #### 4.7.1 查看分支
 
