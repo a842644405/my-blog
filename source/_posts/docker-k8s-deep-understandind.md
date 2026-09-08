@@ -15,13 +15,29 @@ containerd-shim-runc-v2进程是 **containerd** 为管理**某个特定容器**�
 
 它的核心职责是：**将容器进程与 containerd 守护进程解耦**，即使 containerd 自身重启或崩溃，容器本身也不会因此退出。
 
-容器退出删除后，shim进程消失
+容器退出删除后，代理进程消失
+
+
+
+```
+-namespace moby 是 Docker 官方使用的默认命名空间，Docker 通过 containerd 管理容器时，所有容器都放在这个命名空间里。
+如果你看到 k8s.io，说明是 Kubernetes 管理的容器；如果是 default，则是纯 containerd 创建的容器。
+
+-id b65a3d534300...
+这是容器的完整 ID。
+对应于 docker inspect 里看到的容器 ID，通常 docker ps 只显示前 12 位短 ID。
+
+-address /run/containerd/containerd.sock
+这是 containerd 的 gRPC socket 地址。
+shim 进程通过这个 socket 与 containerd 守护进程通信。
+它用来上报容器状态、接收控制指令、转发日志等。
+```
 
 
 
 ## NameSpace限制容器能够看到的世界
 
-ls ps ifconfig容器和宿主机中执行的结果不一样 为什么？
+ls ps ifconfig在容器和宿主机中执行结果不一样 为什么？
 
 ![image-20260720172443777](docker-k8s-deep-understandind/image-20260720172443777.png)
 
@@ -29,7 +45,7 @@ ls ps ifconfig容器和宿主机中执行的结果不一样 为什么？
 
 ![image-20260720172616913](docker-k8s-deep-understandind/image-20260720172616913.png)
 
-![image-20260720172937142](docker-k8s-deep-understandind/image-20260720172937142.png)
+![image-20260907155116425](docker-k8s-deep-understandind/image-20260907155116425.png)
 
 从以上2张图中注意到vim进程（systemd的子进程）对应的ipc mnt net pid user uts都和宿主机的NS一样
 
@@ -37,7 +53,7 @@ ls ps ifconfig容器和宿主机中执行的结果不一样 为什么？
 
 ![image-20260720173608186](docker-k8s-deep-understandind/image-20260720173608186.png)
 
-只有user和宿主机一样，所以ls ps ifconfig结果也不一样
+而容器b1的ns只有user和宿主机一样，mnt、pid、net不一样，所以ls ps ifconfig结果也不一样。
 
 
 
@@ -47,7 +63,11 @@ ls ps ifconfig容器和宿主机中执行的结果不一样 为什么？
 
 ## Cgroup限制容器能够使用的资源（CPU篇）
 
+
+
 ## Cgroup限制容器能够使用的资源（内存篇）
+
+
 
 ## overlay2文件系统
 
@@ -76,7 +96,7 @@ docker inspect centos:centos7.9.2009
 
 ![image-20260722154143223](docker-k8s-deep-understandind/image-20260722154143223.png)
 
-centos基础镜像没有lower层
+centos是基础镜像，没有lower层
 
 ```
 #Dockerfile
@@ -159,13 +179,13 @@ Run 'docker network COMMAND --help' for more information on a command.
 
 核心本质：Docker通过**虚拟网桥、虚拟网卡、端口映射**实现容器网络虚拟化。
 
-5大原生网络模式（重点）
+**5大原生网络模式（重点）**
 
 执行 `docker network ls` 可查看所有原生网络，默认自带5种：
 
 1. bridge 桥接网络（默认模式）
 
-**核心特点**：容器默认网络，Docker自动创建`docker0` 虚拟网桥(虚拟交换机)
+容器默认网络，Docker自动创建`docker0` 虚拟网桥(虚拟交换机)
 
 ![image-20260722193417364](docker-k8s-deep-understandind/image-20260722193417364.png)
 
@@ -294,7 +314,7 @@ veth pair 就是一根**虚拟交叉网线**，两端各有一个“水晶头”
 
 ![image-20260729093827904](docker-k8s-deep-understandind/image-20260729093827904.png) 
 
-![image-20260727205601896](docker-k8s-deep-understandind/image-20260727205601896.png)
+![image-20260907205145558](docker-k8s-deep-understandind/image-20260907205145558.png)
 
 ![image-20260727200124360](docker-k8s-deep-understandind/image-20260727200124360.png)
 
@@ -317,6 +337,8 @@ src 172.17.0.2 表示从这个接口发出的数据包，源 IP 地址默认为 
 
 
 ## 外网访问容器
+
+docker run --name n1  -p 80:80 nginx 
 
 **curl和浏览器的区别**
 
