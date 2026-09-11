@@ -364,7 +364,9 @@ curl完整请求
 
 
 
-容器缺命令，宿主机执行命令到容器中
+### **容器缺命令，宿主机执行命令到容器中**
+
+nsenter --net=/var/run/docker/netns/ingress_sbox ipvsadm --list
 
 ```
 [root@worker1 ~]# docker inspect n1 | grep -i sandboxkey
@@ -508,7 +510,7 @@ options ndots:0
 
 详细可参考：不同宿主机容器互访（Docker/Kubernetes）系统性笔记.md
 
-2台机器的容器不能同时连接一个虚拟网卡，通过docker swarm部署docker集群
+2台机器的容器不能同时连接一个虚拟网卡，需通过docker swarm部署docker集群
 
 docker info可以查看集群信息，判断当前主机为管理节点还是工作节点
 
@@ -565,8 +567,10 @@ docker service create 会将容器默认接入ingress
 
 ## docker swarm service
 
-service 是运行在docker集群模式下，使用同一个镜像创建的，一个或多个容器组成的集合。Service是对这些容器的一个抽象或封装。访问集群任何一个节点，都可以访问到这个service。
-service可以一键动态的扩缩容，对一个service创建多个副本
+service 是运行在docker集群模式下，使用同一个镜像创建的一个或多个容器组成的集合。
+
+Service是对这组容器的一个封装。访问集群任何一个节点，都可以访问到这个service。
+service可以一键动态的扩缩容。
 
 ```
 docker service create --name mynginx --replicas 3 -p 80:80 nginx
