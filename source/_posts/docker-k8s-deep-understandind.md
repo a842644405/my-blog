@@ -342,11 +342,11 @@ docker run --name n1  -p 80:80 nginx
 
 **curl和浏览器的区别**
 
-curl完整请求
+curl完整发出一次请求
 
 ![image-20260729095559126](docker-k8s-deep-understandind/image-20260729095559126.png)
 
-浏览器会有缓存
+浏览器可能访问缓存
 
 ![image-20260729095438944](docker-k8s-deep-understandind/image-20260729095438944.png)
 
@@ -366,7 +366,15 @@ curl完整请求
 
 ### **容器缺命令，宿主机执行命令到容器中**
 
+方式1 nsenter
+
+```
 nsenter --net=/var/run/docker/netns/ingress_sbox ipvsadm --list
+nsenter --net=/var/run/docker/netns/ingress_sbox ls -l
+nsenter -t $PID -m -u -i -n -p /bin/bash -l
+```
+
+方式2 ip netns
 
 ```
 [root@worker1 ~]# docker inspect n1 | grep -i sandboxkey
@@ -497,12 +505,52 @@ docker stop n1后80端口不再监听 iptables的规则也被删除。
 
 容器2、3的/etc/resolve.conf和容器1（同宿主机的resolve.conf）不一样
 
+```
+容器2、3
 [root@c7c8525d4c48 /]# cat /etc/resolv.conf
-
 nameserver 127.0.0.11
 options ndots:0
 
 
+```
+
+resolve.conf的生成机制
+
+1. Docker 容器中
+
+Docker 不会硬编码镜像内部的 `resolv.conf`，而是在容器启动时通过 **Bind Mount（绑定挂载）** 将宿主机或 Docker 引擎生成的文件挂载进容器内部的 `/etc/resolv.conf`：
+
+- **默认 Bridge 网络模式：**
+  - Docker 会复制宿主机的 `/etc/resolv.conf`（过滤掉 127.0.0.1 等无法直接访问的本地回环地址）。
+  - 若宿主机使用了 `systemd-resolved`（127.0.0.53），Docker 会自动将其替换为公网 DNS（如 Google DNS `8.8.8.8` 或 Cloudflare `1.1.1.1`），避免容器内解析失败。
+- **自定义 Docker 网络模式：**
+  - Docker 会启动内置的内嵌 DNS 服务器（地址固定为 `127.0.0.11`）。
+  - 容器内的 `/etc/resolv.conf` 中 `nameserver` 会被设为 `127.0.0.11`。容器内部的 DNS 请求先经过此内嵌服务器处理（实现基于容器名的服务发现），处理不了的再转发给宿主机的上游 DNS。
+- **手动覆盖配置：**
+  - 可以在启动容器时加参数显式指定：
+    - `--dns 8.8.8.8`（自定义 DNS 地址）
+    - `--dns-search example.com`（自定义搜索域）
+    - `--dns-opt ndots:2`（自定义 DNS 选项）
+
+2. Kubernetes (k8s) Pod 中
+
+Pod 内部容器的 `/etc/resolv.conf` 由 Kubelet 在创建 Pod 时根据 **`dnsPolicy`（DNS 策略）** 动态渲染写入：
+
+- **`ClusterFirst`（默认策略）：**
+
+  - 优先使用集群内部的 CoreDNS / kube-dns 服务。
+  - `nameserver` 指向集群内部 CoreDNS 的 ClusterIP。
+  - `search` 自动包含 Pod 所在命名空间及集群的后缀（例如 `default.svc.cluster.local svc.cluster.local cluster.local`），以便直接通过服务名跨 Namespace 通信。
+
+- **`Default` 策略：**
+
+  - 强制让 Pod 继承运行该 Pod 的 **Node 宿主机** 的 `/etc/resolv.conf` 配置。
+
+- **`None` 策略：**
+
+  - 忽略集群和宿主机默认配置，完全依赖 Pod 规格配置中的 `dnsConfig` 自定义内容。
+
+  
 
 ## 不同宿主机内的容器互访 
 
@@ -641,9 +689,9 @@ docker network inspect docker_gwbridge
 
 ![image-20260801143006219](docker-k8s-deep-understandind/image-20260801143006219.png)    
 
-kubelet直接先启动核心组件
+控制平面的kubelet直接先启动核心组件
 
-
+node节点
 
 ![image-20260801143301666](docker-k8s-deep-understandind/image-20260801143301666.png)
 
@@ -687,71 +735,8 @@ Pod
 
 1.创建pod-demo.yaml
 
-```
-apiVersion: v1
-kind: Pod
-metadata:
-  name: multi-container-demo
-  labels:
-    app: demo
-spec:
-  nodeName: worker1
-  # 初始化容器
-  initContainers:
-  - name: init-page
-    image: busybox
-    imagePullPolicy: IfNotPresent
-    command:
-    - sh
-    - -c
-    - |
-      echo "hello from initContainer" > /data/index.html
-    volumeMounts:
-    - name: shared-data
-      mountPath: /data
-
-  containers:
-  # 主容器
-  - name: nginx
-    image: nginx
-    imagePullPolicy: IfNotPresent
-    ports:
-    - containerPort: 80
-    volumeMounts:
-    - name: shared-data
-      mountPath: /usr/share/nginx/html
-
-    readinessProbe:
-      httpGet:
-        path: /
-        port: 80
-      initialDelaySeconds: 5
-      periodSeconds: 5
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        cpu: 500m
-        memory: 256Mi
-
-  # sidecar
-  - name: log-sidecar
-    image: busybox
-    imagePullPolicy: IfNotPresent
-    command:
-    - sh
-    - -c
-    - |
-      tail -f /var/log/nginx/access.log
-    volumeMounts:
-    - name: nginx-log
-      mountPath: /var/log/nginx
-  volumes:
-  - name: shared-data
-    emptyDir: {}
-  - name: nginx-log
-    emptyDir: {}
+```yaml
+使用41里的
 ```
 
 创建了一个固定运行在 worker1 节点上的多容器 Pod：先用 initContainer 初始化共享网页文件，然后由 nginx 容器提供 Web 服务，同时通过共享 Volume 让 sidecar 容器读取 nginx 日志，实现“初始化 + 主业务 + 辅助日志采集”的 Pod 协作模式
