@@ -805,3 +805,21 @@ kubectl delete -f nginx.yaml
 ## pv and pvc
 
 ![image-20260814121901228](docker-k8s-deep-understandind/image-20260814121901228.png)![image-20260814121957303](docker-k8s-deep-understandind/image-20260814121957303.png)
+
+![image-20260914172944771](docker-k8s-deep-understandind/image-20260914172944771.png)
+
+![image-20260914192035720](docker-k8s-deep-understandind/image-20260914192035720.png)
+
+![image-20260914192251656](docker-k8s-deep-understandind/image-20260914192251656.png)
+
+ ![image-20260915104643951](docker-k8s-deep-understandind/image-20260915104643951.png)
+
+## PV and PVC 生命周期
+
+![image-20260915104721948](docker-k8s-deep-understandind/image-20260915104721948.png)
+
+## 绑定PVC到特定PV
+
+![image-20260915104901422](docker-k8s-deep-understandind/image-20260915104901422.png)![image-20260915104936320](docker-k8s-deep-understandind/image-20260915104936320.png) 
+
+![image-20260915105301363](docker-k8s-deep-understandind/image-20260915105301363.png)
